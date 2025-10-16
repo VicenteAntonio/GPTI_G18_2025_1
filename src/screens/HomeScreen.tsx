@@ -10,12 +10,12 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { MeditationCard } from '@/components/MeditationCard';
-import { Button } from '@/components/Button';
-import { MEDITATION_SESSIONS, MEDITATION_CATEGORIES } from '@/constants';
-import { StorageService } from '@/services/StorageService';
-import { MeditationSession, UserProgress } from '@/types';
-import { RootStackParamList } from '@/navigation/AppNavigator';
+import { MeditationCard } from '../components/MeditationCard';
+import { Button } from '../components/Button';
+import { MEDITATION_SESSIONS, MEDITATION_CATEGORIES } from '../constants';
+import { StorageService } from '../services/StorageService';
+import { MeditationSession, UserProgress } from '../types';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MainTabs'>;
 

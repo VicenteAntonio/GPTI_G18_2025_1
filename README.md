@@ -4,6 +4,21 @@ Una aplicación móvil desarrollada en React Native con TypeScript y Expo para s
 
 ## 🚀 Inicio Rápido
 
+⚠️ **IMPORTANTE**: Si la app se queda cargando infinitamente, consulta [`INSTRUCCIONES_EJECUCION.md`](./INSTRUCCIONES_EJECUCION.md)
+
+### Pasos para Ejecutar
+
+```bash
+# 1. Limpiar instalación anterior (si existe)
+rm -rf node_modules package-lock.json
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Iniciar el servidor con caché limpio
+npm start
+```
+
 ### Usando el Script de Inicialización
 
 ```bash
@@ -12,16 +27,6 @@ Una aplicación móvil desarrollada en React Native con TypeScript y Expo para s
 
 # O usar npm
 npm run init
-```
-
-### Inicio Manual
-
-```bash
-# Instalar dependencias (si no se hizo automáticamente)
-npm install
-
-# Iniciar el servidor de desarrollo
-npm start
 ```
 
 ## Características

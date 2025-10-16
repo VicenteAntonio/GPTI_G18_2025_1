@@ -1,4 +1,4 @@
-import { MeditationCategory } from '@/types';
+import { MeditationCategory } from '../types';
 
 export const MEDITATION_CATEGORIES: MeditationCategory[] = [
   {

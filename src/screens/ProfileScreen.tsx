@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 
-import { Button } from '@/components/Button';
-import { StorageService } from '@/services/StorageService';
-import { UserProgress } from '@/types';
-import { MEDITATION_CATEGORIES } from '@/constants';
+import { Button } from '../components/Button';
+import { StorageService } from '../services/StorageService';
+import { UserProgress } from '../types';
+import { MEDITATION_CATEGORIES } from '../constants';
 
 const ProfileScreen: React.FC = () => {
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);

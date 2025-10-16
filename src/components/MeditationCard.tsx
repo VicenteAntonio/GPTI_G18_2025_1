@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { MeditationSession } from '@/types';
+import { MeditationSession } from '../types';
 
 interface MeditationCardProps {
   session: MeditationSession;

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserProgress, MeditationSession } from '@/types';
-import { STORAGE_KEYS } from '@/constants';
+import { UserProgress, MeditationSession } from '../types';
+import { STORAGE_KEYS } from '../constants';
 
 export class StorageService {
   static async getUserProgress(): Promise<UserProgress> {

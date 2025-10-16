@@ -1,10 +1,11 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-import HomeScreen from '@/screens/HomeScreen';
-import MeditationScreen from '@/screens/MeditationScreen';
-import ProfileScreen from '@/screens/ProfileScreen';
+import HomeScreen from '../screens/HomeScreen';
+import MeditationScreen from '../screens/MeditationScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 export type RootStackParamList = {
   MainTabs: undefined;

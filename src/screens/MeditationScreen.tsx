@@ -11,10 +11,10 @@ import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Audio } from 'expo-av';
 
-import { Button } from '@/components/Button';
-import { MEDITATION_SESSIONS } from '@/constants';
-import { StorageService } from '@/services/StorageService';
-import { RootStackParamList } from '@/navigation/AppNavigator';
+import { Button } from '../components/Button';
+import { MEDITATION_SESSIONS } from '../constants';
+import { StorageService } from '../services/StorageService';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
 type MeditationScreenRouteProp = RouteProp<RootStackParamList, 'Meditation'>;
 type MeditationScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Meditation'>;

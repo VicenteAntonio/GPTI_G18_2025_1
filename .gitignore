@@ -1,0 +1,32 @@
+# Dependencias
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+
+# Archivos de sistema
+.DS_Store
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Archivos temporales
+*.swp
+*.swo
+*~
+
+# Build
+build/
+*.apk
+*.ipa
+
+# Configuración local
+.env
+.env.local
+
+# Lock files (opcional mantener package-lock.json)
+# package-lock.json

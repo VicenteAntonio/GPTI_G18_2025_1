@@ -1,30 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity } from 'react-native';
 
 import { Button } from '../components/Button';
 import { StorageService } from '../services/StorageService';
-import { UserProgress } from '../types';
+import { AuthService } from '../services/AuthService';
+import { User } from '../types';
 import { MEDITATION_CATEGORIES } from '../constants';
 
 const ProfileScreen: React.FC = () => {
-  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userProgress, setUserProgress] = useState<any>(null);
 
   useEffect(() => {
-    loadUserProgress();
+    loadUserData();
   }, []);
 
-  const loadUserProgress = async () => {
+  const loadUserData = async () => {
     try {
+      const user = await AuthService.getCurrentLoggedUser();
+      setCurrentUser(user);
+      
       const progress = await StorageService.getUserProgress();
       setUserProgress(progress);
     } catch (error) {
-      console.error('Error loading user progress:', error);
+      console.error('Error loading user data:', error);
     }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro de que quieres cerrar sesión?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Cerrar Sesión',
+          style: 'destructive',
+          onPress: async () => {
+            await AuthService.logout();
+            // Necesitamos forzar el reinicio completo de la app
+            // Esto se manejará desde App.tsx
+          },
+        },
+      ]
+    );
   };
 
   const resetProgress = async () => {
     try {
       const defaultProgress = {
+        userId: 'legacy-user',
         totalSessions: 0,
         totalMinutes: 0,
         currentStreak: 0,
@@ -51,6 +79,13 @@ const ProfileScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <Text style={styles.userIcon}>👤</Text>
+            <View style={styles.userDetails}>
+              <Text style={styles.username}>{currentUser?.username || 'Usuario'}</Text>
+              <Text style={styles.userEmail}>{currentUser?.email || ''}</Text>
+            </View>
+          </View>
           <Text style={styles.title}>Tu Progreso</Text>
           <Text style={styles.subtitle}>Sigue tu viaje de meditación</Text>
         </View>
@@ -151,6 +186,14 @@ const ProfileScreen: React.FC = () => {
             onPress={resetProgress}
             style={styles.resetButton}
           />
+          
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.logoutButtonText}>🚪 Cerrar Sesión</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -179,6 +222,33 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    width: '100%',
+  },
+  userIcon: {
+    fontSize: 40,
+    marginRight: 16,
+  },
+  userDetails: {
+    flex: 1,
+  },
+  username: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2C3E50',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: '#7F8C8D',
   },
   title: {
     fontSize: 28,
@@ -290,6 +360,26 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     marginTop: 20,
+  },
+  logoutButton: {
+    marginTop: 16,
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#FF6B6B',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

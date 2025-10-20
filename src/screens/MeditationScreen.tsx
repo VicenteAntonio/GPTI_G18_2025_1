@@ -53,6 +53,48 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   }, [session]);
 
+  // Interceptar el botón de atrás
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      // Si la sesión está completada, dejar salir sin confirmación
+      if (currentTime >= duration && duration > 0) {
+        return;
+      }
+
+      // Prevenir la acción por defecto
+      e.preventDefault();
+
+      // Mostrar confirmación
+      Alert.alert(
+        '¿Salir de la lección?',
+        'El progreso no se guardará y esta sesión no contará para ganar betterflies.',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Salir',
+            style: 'destructive',
+            onPress: () => {
+              // Limpiar audio si existe
+              if (sound) {
+                sound.unloadAsync();
+              }
+              if (intervalId) {
+                clearInterval(intervalId);
+              }
+              // Permitir la navegación
+              navigation.dispatch(e.data.action);
+            },
+          },
+        ]
+      );
+    });
+
+    return unsubscribe;
+  }, [navigation, currentTime, duration, sound, intervalId]);
+
   useEffect(() => {
     return () => {
       // Limpiar al desmontar el componente
@@ -221,14 +263,6 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.backButtonText}>← Volver</Text>
-        </TouchableOpacity>
-        
         <Text style={styles.title}>{session.title}</Text>
         <Text style={styles.category}>
           {session.category.icon} {session.category.name}
@@ -300,28 +334,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  backButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    zIndex: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-  },
-  backButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4ECDC4',
-  },
   title: {
     fontSize: 24,
     fontWeight: '700',
     color: '#2C3E50',
     textAlign: 'center',
     marginBottom: 8,
-    marginTop: 20,
   },
   category: {
     fontSize: 16,

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Animated,
   Easing,
+  Image,
 } from 'react-native';
 
 interface Props {
@@ -12,39 +13,71 @@ interface Props {
 }
 
 const SplashScreen: React.FC<Props> = ({ onFinish }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.3)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const iconFadeAnim = useRef(new Animated.Value(0)).current;
+  const titleFadeAnim = useRef(new Animated.Value(0)).current;
+  const subtitleFadeAnim = useRef(new Animated.Value(0)).current;
+  const loadingFadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    // Animación de entrada
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(iconFadeAnim, {
+          toValue: 1,
+          duration: 600,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 20,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(titleFadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 500,
+        easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }),
-      Animated.spring(scaleAnim, {
+      Animated.timing(subtitleFadeAnim, {
         toValue: 1,
-        tension: 10,
-        friction: 2,
+        duration: 500,
+        easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }),
-      Animated.timing(rotateAnim, {
+      Animated.timing(loadingFadeAnim, {
         toValue: 1,
-        duration: 1000,
-        easing: Easing.ease,
+        duration: 400,
+        easing: Easing.out(Easing.ease),
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Esperar 2.5 segundos y terminar
     const timer = setTimeout(() => {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }).start(() => {
+      Animated.parallel([
+        Animated.timing(iconFadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(titleFadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(subtitleFadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(loadingFadeAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
         onFinish();
       });
     }, 2500);
@@ -52,41 +85,45 @@ const SplashScreen: React.FC<Props> = ({ onFinish }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  const rotate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }, { rotate }],
-          },
-        ]}
-      >
-        <View style={styles.iconContainer}>
-          <Text style={styles.icon}>🧘</Text>
-        </View>
-        <Animated.Text style={[styles.title, { opacity: fadeAnim }]}>
+      <View style={styles.content}>
+        {/* Logo con fade y escala */}
+        <Animated.View
+          style={[
+            styles.logoContainer,
+            {
+              opacity: iconFadeAnim,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
+        >
+          <Image
+            source={require('../../assets/splash.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </Animated.View>
+
+        {/* Título con fade */}
+        <Animated.Text style={[styles.title, { opacity: titleFadeAnim }]}>
           Meditación Diaria
         </Animated.Text>
-        <Animated.Text style={[styles.subtitle, { opacity: fadeAnim }]}>
+
+        {/* Subtítulo con fade */}
+        <Animated.Text style={[styles.subtitle, { opacity: subtitleFadeAnim }]}>
           Encuentra tu paz interior
         </Animated.Text>
-      </Animated.View>
+      </View>
 
-      {/* Loading indicator */}
-      <Animated.View style={[styles.loadingContainer, { opacity: fadeAnim }]}>
+      {/* Loading indicator con fade */}
+      <Animated.View style={[styles.loadingContainer, { opacity: loadingFadeAnim }]}>
         <View style={styles.loadingBar}>
           <Animated.View
             style={[
               styles.loadingFill,
               {
-                width: rotateAnim.interpolate({
+                width: loadingFadeAnim.interpolate({
                   inputRange: [0, 1],
                   outputRange: ['0%', '100%'],
                 }),
@@ -110,17 +147,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 60,
   },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  logoContainer: {
+    width: 150,
+    height: 150,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 30,
   },
-  icon: {
-    fontSize: 60,
+  logo: {
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: 32,

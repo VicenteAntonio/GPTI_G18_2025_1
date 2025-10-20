@@ -31,11 +31,19 @@ npm run init
 
 ## Características
 
-- 🧘‍♀️ Sesiones de meditación por categorías
+### Funcionalidades Principales
+- 🧘‍♀️ Sesiones de meditación por categorías (relajación, autoconciencia, concentración)
+- ▶️ Reproductor con auto-inicio y pause/resume
 - 📊 Seguimiento de progreso y estadísticas
 - 🎯 Sistema de rachas diarias
-- 💾 Almacenamiento local del progreso
+- 💾 Base de datos simple con AsyncStorage
 - 🎨 Interfaz moderna y fácil de usar
+
+### Base de Datos
+- 👤 **Usuarios**: username, email, password, rachas, progreso
+- 📚 **Lecciones**: tipo, nombre, ID, tiempo, audio
+
+Ver documentación en [`BASE_DE_DATOS.md`](./BASE_DE_DATOS.md)
 
 ## Tecnologías Utilizadas
 
@@ -149,14 +157,20 @@ Los estilos están definidos en cada componente usando StyleSheet de React Nativ
 - Usa componentes funcionales con hooks
 - Implementa manejo de errores apropiado
 
+## 📚 Documentación
+
+- **[BASE_DE_DATOS.md](./BASE_DE_DATOS.md)** - Documentación de la base de datos
+- **[INSTRUCCIONES_EJECUCION.md](./INSTRUCCIONES_EJECUCION.md)** - Troubleshooting y ejecución
+
 ## Próximas Mejoras
 
-- [ ] Integración con servicios de audio reales
+- [ ] Botón de reiniciar sesión
+- [ ] Adelantar/retroceder 10 segundos
+- [ ] Control de volumen
 - [ ] Notificaciones push para recordatorios
-- [ ] Modo offline completo
 - [ ] Sincronización en la nube
 - [ ] Temas oscuro/claro
-- [ ] Meditaciones personalizadas
+- [ ] Exportar/importar datos
 
 ## Contribución
 

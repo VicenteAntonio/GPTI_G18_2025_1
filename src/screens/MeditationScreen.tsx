@@ -31,21 +31,39 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const foundSession = MEDITATION_SESSIONS.find(s => s.id === sessionId);
     if (foundSession) {
       setSession(foundSession);
+      setDuration(foundSession.duration * 60 * 1000); // Configurar duración desde el inicio
     }
   }, [sessionId]);
 
+  // Auto-iniciar la sesión cuando se carga
+  useEffect(() => {
+    if (session && !isPlaying && currentTime === 0) {
+      // Pequeño delay para asegurar que la UI se renderice primero
+      const timer = setTimeout(() => {
+        loadSound();
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [session]);
+
   useEffect(() => {
     return () => {
+      // Limpiar al desmontar el componente
       if (sound) {
         sound.unloadAsync();
       }
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
-  }, [sound]);
+  }, [sound, intervalId]);
 
   const playSound = async () => {
     try {
@@ -73,13 +91,14 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
     try {
       const { sound: newSound } = await Audio.Sound.createAsync(
         require('../../assets/meditation-audio.mp3'), // Placeholder audio file
-        { shouldPlay: false }
+        { shouldPlay: true } // Iniciar reproducción automáticamente
       );
 
       newSound.setOnPlaybackStatusUpdate((status) => {
         if (status.isLoaded) {
           setCurrentTime(status.positionMillis || 0);
           setDuration(status.durationMillis || 0);
+          setIsPlaying(status.isPlaying || false);
 
           if (status.didJustFinish) {
             setIsPlaying(false);
@@ -89,6 +108,7 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
       });
 
       setSound(newSound);
+      setIsPlaying(true);
     } catch (error) {
       console.error('Error loading sound:', error);
       // For demo purposes, we'll simulate audio playback
@@ -104,6 +124,7 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
       setCurrentTime(prev => {
         if (prev >= session.duration * 60 * 1000) {
           clearInterval(interval);
+          setIntervalId(null);
           setIsPlaying(false);
           completeSession();
           return session.duration * 60 * 1000;
@@ -111,6 +132,35 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
         return prev + 1000;
       });
     }, 1000);
+    
+    setIntervalId(interval);
+  };
+
+  const pauseSimulation = () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(null);
+    }
+    setIsPlaying(false);
+  };
+
+  const resumeSimulation = () => {
+    setIsPlaying(true);
+    
+    const interval = setInterval(() => {
+      setCurrentTime(prev => {
+        if (prev >= duration) {
+          clearInterval(interval);
+          setIntervalId(null);
+          setIsPlaying(false);
+          completeSession();
+          return duration;
+        }
+        return prev + 1000;
+      });
+    }, 1000);
+    
+    setIntervalId(interval);
   };
 
   const completeSession = async () => {
@@ -130,12 +180,26 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   const handlePlayPause = async () => {
-    if (!sound && !isPlaying) {
+    // Si no hay sonido cargado y no está reproduciendo, cargar audio
+    if (!sound && !isPlaying && currentTime === 0) {
       await loadSound();
-    } else if (isPlaying) {
-      await pauseSound();
+      return;
+    }
+
+    // Si está reproduciendo, pausar
+    if (isPlaying) {
+      if (sound) {
+        await pauseSound();
+      } else {
+        pauseSimulation();
+      }
     } else {
-      await playSound();
+      // Si está pausado, reanudar
+      if (sound) {
+        await playSound();
+      } else {
+        resumeSimulation();
+      }
     }
   };
 
@@ -167,7 +231,10 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
         <View style={styles.timerContainer}>
           <View style={styles.timer}>
             <Text style={styles.timerText}>
-              {formatTime(currentTime)} / {formatTime(duration)}
+              {formatTime(currentTime)}
+            </Text>
+            <Text style={styles.timerSubtext}>
+              de {formatTime(duration)}
             </Text>
           </View>
 
@@ -183,13 +250,17 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
 
         <View style={styles.controls}>
           <TouchableOpacity
-            style={styles.playButton}
+            style={[styles.playButton, isPlaying && styles.pauseButton]}
             onPress={handlePlayPause}
+            activeOpacity={0.7}
           >
             <Text style={styles.playButtonText}>
               {isPlaying ? '⏸️' : '▶️'}
             </Text>
           </TouchableOpacity>
+          <Text style={styles.controlLabel}>
+            {isPlaying ? 'Pausar' : currentTime > 0 ? 'Reanudar' : 'Comenzar'}
+          </Text>
         </View>
 
         <View style={styles.sessionInfo}>
@@ -241,6 +312,7 @@ const styles = StyleSheet.create({
   timerContainer: {
     alignItems: 'center',
     marginBottom: 40,
+    width: '100%',
   },
   timer: {
     width: 200,
@@ -260,9 +332,16 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   timerText: {
-    fontSize: 32,
-    fontWeight: '600',
+    fontSize: 36,
+    fontWeight: '700',
     color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  timerSubtext: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FFFFFF',
+    opacity: 0.9,
   },
   progressBar: {
     width: 250,
@@ -278,6 +357,7 @@ const styles = StyleSheet.create({
   },
   controls: {
     marginBottom: 40,
+    alignItems: 'center',
   },
   playButton: {
     width: 80,
@@ -295,8 +375,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  pauseButton: {
+    backgroundColor: '#FF6B6B',
+  },
   playButtonText: {
     fontSize: 32,
+  },
+  controlLabel: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2C3E50',
   },
   sessionInfo: {
     alignItems: 'center',

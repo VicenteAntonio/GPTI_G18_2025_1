@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-10-21
+
+### Added
+- Points system (betterflies) with formula: `minutes × 2 + floor(streak / 3) + 1`
+- Category tracking (sleep, relaxation, self-awareness)
+- Favorite session type display in profile with visual breakdown
+- Date-based streak system with `lastLessonDate` field
+- Automatic streak reset after 2+ days of inactivity
+- Streak verification on login
+- 3 meditation categories: Sleep, Relaxation, Self-Awareness
+- 3 meditation sessions (one per category)
+- 7-second test session for Sleep category
+- User data now includes: `sleepCompleted`, `relaxationCompleted`, `selfAwarenessCompleted`, `totalSessions`, `totalMinutes`, `betterflies`, `lastLessonDate`
+- Synchronized statistics between Home and Profile screens
+- Visual breakdown of completed sessions by category
+
+### Changed
+- Meditation categories reduced from 5 to 3 (Sleep, Relaxation, Self-Awareness)
+- Meditation sessions reduced from 6 to 3 (one per category)
+- Streak now increments only once per day (multiple sessions per day don't increase streak)
+- Profile screen now displays betterflies with Betterflie.png icon
+- Profile screen shows favorite session type based on most completed category
+- Home screen now uses real user data instead of legacy storage
+- Test session moved to Sleep category (7 seconds)
+- User model updated with new tracking fields
+- Points calculation now includes base point (+1)
+
+### Removed
+- "Reset Progress" button from profile screen
+- Achievements section (commented out for future implementation)
+- Concentration category replaced with Self-Awareness
+- Anxiety and Focus categories removed
+- Multiple sessions per category reduced to one
+
+### Fixed
+- Streak logic now prevents inflation from multiple daily sessions
+- Profile and Home screens now show consistent data
+- Category counters properly increment on lesson completion
+- Proper handling of first-time users (streak = 1 on first lesson)
+
 ## [1.2.0] - 2025-10-20
 
 ### Added

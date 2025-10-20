@@ -89,21 +89,25 @@ export class DatabaseService {
   /**
    * Actualizar progreso del usuario
    */
+  /**
+   * @deprecated Usar completeLesson en su lugar
+   * Función legacy para compatibilidad
+   */
   static async updateUserProgress(
     email: string,
-    lessonType: 'relaxation' | 'selfAwareness' | 'concentration'
+    lessonType: 'sleep' | 'relaxation' | 'selfAwareness'
   ): Promise<void> {
     try {
       const user = await this.getUserByEmail(email);
       if (!user) return;
 
       // Incrementar el contador correspondiente
-      if (lessonType === 'relaxation') {
+      if (lessonType === 'sleep') {
+        user.sleepCompleted++;
+      } else if (lessonType === 'relaxation') {
         user.relaxationCompleted++;
       } else if (lessonType === 'selfAwareness') {
         user.selfAwarenessCompleted++;
-      } else if (lessonType === 'concentration') {
-        user.concentrationCompleted++;
       }
 
       // Actualizar racha (simplificado: incrementa siempre)
@@ -179,6 +183,155 @@ export class DatabaseService {
     }
   }
 
+  /**
+   * Obtener diferencia de días entre dos fechas
+   */
+  private static getDaysDifference(date1: string, date2: string): number {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    const diffTime = Math.abs(d2.getTime() - d1.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+
+  /**
+   * Obtener fecha actual en formato YYYY-MM-DD
+   */
+  private static getTodayDate(): string {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }
+
+  /**
+   * Verificar y resetear racha si han pasado 2 o más días
+   */
+  static async checkAndResetStreak(user: User): Promise<void> {
+    try {
+      if (!user.lastLessonDate) {
+        // Primera vez, no hay nada que resetear
+        return;
+      }
+
+      const today = this.getTodayDate();
+      const daysPassed = this.getDaysDifference(user.lastLessonDate, today);
+
+      // Si han pasado 2 o más días, resetear racha
+      if (daysPassed >= 2) {
+        const updatedUser: User = {
+          ...user,
+          streak: 0,
+        };
+        await this.saveUser(updatedUser);
+      }
+    } catch (error) {
+      console.error('Error verificando racha:', error);
+    }
+  }
+
+  /**
+   * Actualizar progreso del usuario al completar una lección
+   * Fórmula betterflies: minutos × 2 + floor(racha / 3) + 1
+   */
+  static async completeLesson(
+    userEmail: string, 
+    lessonMinutes: number, 
+    categoryId: string
+  ): Promise<{
+    user: User;
+    betterfliesEarned: number;
+  } | null> {
+    try {
+      const user = await this.getUserByEmail(userEmail);
+      if (!user) return null;
+
+      // Calcular minutos enteros
+      const minutesInt = Math.floor(lessonMinutes);
+
+      const today = this.getTodayDate();
+      let newStreak = user.streak;
+
+      // Actualizar racha solo si es un día diferente
+      if (!user.lastLessonDate) {
+        // Primera lección
+        newStreak = 1;
+      } else {
+        const daysPassed = this.getDaysDifference(user.lastLessonDate, today);
+        
+        if (daysPassed === 1) {
+          // Lección del día siguiente, incrementar racha
+          newStreak = user.streak + 1;
+        } else if (daysPassed >= 2) {
+          // Pasaron 2 o más días, resetear racha
+          newStreak = 1;
+        }
+        // Si daysPassed === 0 (mismo día), mantener racha actual
+      }
+
+      // Calcular betterflies ganadas: minutos × 2 + floor(racha / 3) + 1
+      const betterfliesEarned = (minutesInt * 2) + Math.floor(newStreak / 3) + 1;
+
+      // Incrementar contador de categoría
+      let sleepCompleted = user.sleepCompleted;
+      let relaxationCompleted = user.relaxationCompleted;
+      let selfAwarenessCompleted = user.selfAwarenessCompleted;
+
+      if (categoryId === 'sleep') {
+        sleepCompleted += 1;
+      } else if (categoryId === 'relaxation') {
+        relaxationCompleted += 1;
+      } else if (categoryId === 'selfawareness') {
+        selfAwarenessCompleted += 1;
+      }
+
+      // Actualizar usuario
+      const updatedUser: User = {
+        ...user,
+        totalSessions: user.totalSessions + 1,
+        totalMinutes: user.totalMinutes + minutesInt,
+        streak: newStreak,
+        longestStreak: Math.max(user.longestStreak, newStreak),
+        betterflies: user.betterflies + betterfliesEarned,
+        sleepCompleted,
+        relaxationCompleted,
+        selfAwarenessCompleted,
+        lastLessonDate: today,
+      };
+
+      await this.saveUser(updatedUser);
+      return { user: updatedUser, betterfliesEarned };
+    } catch (error) {
+      console.error('Error completando lección:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Obtener la categoría favorita del usuario
+   * Si hay empate, mantiene la categoría previa o la primera con mayor valor
+   */
+  static getFavoriteCategory(user: User): {
+    name: string;
+    icon: string;
+    count: number;
+  } | null {
+    const categories = [
+      { id: 'sleep', name: 'Sueño', icon: '😴', count: user.sleepCompleted },
+      { id: 'relaxation', name: 'Relajación', icon: '🧘', count: user.relaxationCompleted },
+      { id: 'selfawareness', name: 'Autoconciencia', icon: '🌸', count: user.selfAwarenessCompleted },
+    ];
+
+    // Encontrar el máximo
+    const maxCount = Math.max(...categories.map(c => c.count));
+
+    // Si ninguna tiene sesiones, retornar null
+    if (maxCount === 0) return null;
+
+    // Encontrar la primera categoría con el máximo (mantiene orden de prioridad)
+    const favorite = categories.find(c => c.count === maxCount);
+
+    return favorite || null;
+  }
+
   // ========== UTILIDADES ==========
 
   /**
@@ -205,11 +358,15 @@ export class DatabaseService {
       email: 'demo@meditacion.app',
       password: 'demo123',
       streak: 0,
+      sleepCompleted: 0,
       relaxationCompleted: 0,
       selfAwarenessCompleted: 0,
-      concentrationCompleted: 0,
       longestStreak: 0,
       achievements: [],
+      betterflies: 0,
+      totalSessions: 0,
+      totalMinutes: 0,
+      lastLessonDate: null,
     };
 
     await this.saveUser(demoUser);
@@ -223,8 +380,15 @@ export class DatabaseService {
   static async initDemoLessons(): Promise<void> {
     const demoLessons: Lesson[] = [
       {
+        lessonId: 'sleep-1',
+        lessonName: 'Sueño Profundo',
+        lessonType: 'sueño',
+        lessonTime: 15,
+        lessonAudio: 'file:///sleep-1.mp3',
+      },
+      {
         lessonId: 'relaxation-1',
-        lessonName: 'Relajación Profunda',
+        lessonName: 'Relajación Matutina',
         lessonType: 'relajación',
         lessonTime: 10,
         lessonAudio: 'file:///relaxation-1.mp3',
@@ -233,15 +397,8 @@ export class DatabaseService {
         lessonId: 'selfawareness-1',
         lessonName: 'Consciencia Plena',
         lessonType: 'autoconciencia',
-        lessonTime: 8,
+        lessonTime: 10,
         lessonAudio: 'file:///selfawareness-1.mp3',
-      },
-      {
-        lessonId: 'concentration-1',
-        lessonName: 'Enfoque Mental',
-        lessonType: 'concentración',
-        lessonTime: 5,
-        lessonAudio: 'file:///concentration-1.mp3',
       },
     ];
 

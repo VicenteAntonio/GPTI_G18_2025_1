@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { Button } from '../components/Button';
 import { StorageService } from '../services/StorageService';
 import { AuthService } from '../services/AuthService';
+import { DatabaseService } from '../services/DatabaseService';
 import { User } from '../types';
 import { MEDITATION_CATEGORIES } from '../constants';
 
@@ -15,13 +17,32 @@ const ProfileScreen: React.FC = () => {
     loadUserData();
   }, []);
 
+  // Recargar datos cuando la pantalla reciba el foco (después de completar una sesión)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserData();
+    }, [])
+  );
+
   const loadUserData = async () => {
     try {
       const user = await AuthService.getCurrentLoggedUser();
       setCurrentUser(user);
       
-      const progress = await StorageService.getUserProgress();
-      setUserProgress(progress);
+      if (user) {
+        // Usar datos del usuario directamente
+        const progress = {
+          totalSessions: user.totalSessions,
+          totalMinutes: user.totalMinutes, // Ya es entero
+          currentStreak: user.streak,
+          longestStreak: user.longestStreak,
+        };
+        setUserProgress(progress);
+      } else {
+        // Fallback al sistema legacy
+        const progress = await StorageService.getUserProgress();
+        setUserProgress(progress);
+      }
     } catch (error) {
       console.error('Error loading user data:', error);
     }
@@ -49,24 +70,6 @@ const ProfileScreen: React.FC = () => {
     );
   };
 
-  const resetProgress = async () => {
-    try {
-      const defaultProgress = {
-        userId: 'legacy-user',
-        totalSessions: 0,
-        totalMinutes: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-        completedSessions: [],
-        favoriteCategories: [],
-      };
-      await StorageService.saveUserProgress(defaultProgress);
-      setUserProgress(defaultProgress);
-    } catch (error) {
-      console.error('Error resetting progress:', error);
-    }
-  };
-
   if (!userProgress) {
     return (
       <SafeAreaView style={styles.container}>
@@ -86,6 +89,18 @@ const ProfileScreen: React.FC = () => {
               <Text style={styles.userEmail}>{currentUser?.email || ''}</Text>
             </View>
           </View>
+
+          {/* Betterflies */}
+          <View style={styles.betterfliesContainer}>
+            <Image
+              source={require('../../assets/Betterflie.png')}
+              style={styles.betterflieIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.betterfliesText}>{currentUser?.betterflies || 0}</Text>
+            <Text style={styles.betterfliesLabel}>Betterflies</Text>
+          </View>
+
           <Text style={styles.title}>Tu Progreso</Text>
           <Text style={styles.subtitle}>Sigue tu viaje de meditación</Text>
         </View>
@@ -115,38 +130,50 @@ const ProfileScreen: React.FC = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Categorías Favoritas</Text>
-          <View style={styles.categoriesContainer}>
-            {MEDITATION_CATEGORIES.map((category) => (
-              <View
-                key={category.id}
-                style={[
-                  styles.categoryChip,
-                  {
-                    backgroundColor: userProgress.favoriteCategories.includes(category.id)
-                      ? category.color
-                      : '#E0E0E0',
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.categoryText,
-                    {
-                      color: userProgress.favoriteCategories.includes(category.id)
-                        ? '#FFFFFF'
-                        : '#7F8C8D',
-                    },
-                  ]}
-                >
-                  {category.icon} {category.name}
-                </Text>
+          <Text style={styles.sectionTitle}>Tipo de Sesión Favorito</Text>
+          {currentUser && (() => {
+            const favorite = DatabaseService.getFavoriteCategory(currentUser);
+            if (!favorite) {
+              return (
+                <View style={styles.favoriteCard}>
+                  <Text style={styles.favoriteEmptyText}>
+                    Completa tu primera sesión para descubrir tu favorita ✨
+                  </Text>
+                </View>
+              );
+            }
+            return (
+              <View style={styles.favoriteCard}>
+                <Text style={styles.favoriteIcon}>{favorite.icon}</Text>
+                <View style={styles.favoriteInfo}>
+                  <Text style={styles.favoriteName}>{favorite.name}</Text>
+                  <Text style={styles.favoriteCount}>{favorite.count} sesiones completadas</Text>
+                </View>
               </View>
-            ))}
+            );
+          })()}
+          
+          <View style={styles.categoryBreakdown}>
+            <View style={styles.breakdownItem}>
+              <Text style={styles.breakdownIcon}>😴</Text>
+              <Text style={styles.breakdownLabel}>Sueño</Text>
+              <Text style={styles.breakdownCount}>{currentUser?.sleepCompleted || 0}</Text>
+            </View>
+            <View style={styles.breakdownItem}>
+              <Text style={styles.breakdownIcon}>🧘</Text>
+              <Text style={styles.breakdownLabel}>Relajación</Text>
+              <Text style={styles.breakdownCount}>{currentUser?.relaxationCompleted || 0}</Text>
+            </View>
+            <View style={styles.breakdownItem}>
+              <Text style={styles.breakdownIcon}>🌸</Text>
+              <Text style={styles.breakdownLabel}>Autoconciencia</Text>
+              <Text style={styles.breakdownCount}>{currentUser?.selfAwarenessCompleted || 0}</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.section}>
+        {/* TODO: Implementar sistema de logros */}
+        {/* <View style={styles.section}>
           <Text style={styles.sectionTitle}>Logros</Text>
           <View style={styles.achievementsContainer}>
             <View style={styles.achievement}>
@@ -177,16 +204,9 @@ const ProfileScreen: React.FC = () => {
               </View>
             </View>
           </View>
-        </View>
+        </View> */}
 
         <View style={styles.section}>
-          <Button
-            title="Reiniciar Progreso"
-            variant="outline"
-            onPress={resetProgress}
-            style={styles.resetButton}
-          />
-          
           <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
@@ -250,6 +270,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#7F8C8D',
   },
+  betterfliesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF9E6',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
+  betterflieIcon: {
+    width: 40,
+    height: 40,
+    marginRight: 12,
+  },
+  betterfliesText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#2C3E50',
+    marginRight: 8,
+  },
+  betterfliesLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7F8C8D',
+  },
   title: {
     fontSize: 28,
     fontWeight: '700',
@@ -308,24 +356,13 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginBottom: 16,
   },
-  categoriesContainer: {
+  favoriteCard: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  categoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    margin: 4,
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  achievementsContainer: {
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
+    padding: 20,
     borderRadius: 12,
-    overflow: 'hidden',
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -335,32 +372,90 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  achievement: {
-    flexDirection: 'row',
-    padding: 16,
-    alignItems: 'center',
-  },
-  achievementIcon: {
-    fontSize: 32,
+  favoriteIcon: {
+    fontSize: 48,
     marginRight: 16,
   },
-  achievementContent: {
+  favoriteInfo: {
     flex: 1,
   },
-  achievementTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+  favoriteName: {
+    fontSize: 22,
+    fontWeight: '700',
     color: '#2C3E50',
     marginBottom: 4,
   },
-  achievementDescription: {
+  favoriteCount: {
     fontSize: 14,
     color: '#7F8C8D',
-    lineHeight: 20,
   },
-  resetButton: {
-    marginTop: 20,
+  favoriteEmptyText: {
+    fontSize: 16,
+    color: '#7F8C8D',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
+  categoryBreakdown: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#F8F9FA',
+    padding: 16,
+    borderRadius: 12,
+  },
+  breakdownItem: {
+    alignItems: 'center',
+  },
+  breakdownIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  breakdownLabel: {
+    fontSize: 12,
+    color: '#7F8C8D',
+    marginBottom: 4,
+  },
+  breakdownCount: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2C3E50',
+  },
+  // TODO: Estilos para logros (descomentar cuando se implemente)
+  // achievementsContainer: {
+  //   backgroundColor: '#FFFFFF',
+  //   borderRadius: 12,
+  //   overflow: 'hidden',
+  //   shadowColor: '#000',
+  //   shadowOffset: {
+  //     width: 0,
+  //     height: 2,
+  //   },
+  //   shadowOpacity: 0.1,
+  //   shadowRadius: 4,
+  //   elevation: 3,
+  // },
+  // achievement: {
+  //   flexDirection: 'row',
+  //   padding: 16,
+  //   alignItems: 'center',
+  // },
+  // achievementIcon: {
+  //   fontSize: 32,
+  //   marginRight: 16,
+  // },
+  // achievementContent: {
+  //   flex: 1,
+  // },
+  // achievementTitle: {
+  //   fontSize: 16,
+  //   fontWeight: '600',
+  //   color: '#2C3E50',
+  //   marginBottom: 4,
+  // },
+  // achievementDescription: {
+  //   fontSize: 14,
+  //   color: '#7F8C8D',
+  //   lineHeight: 20,
+  // },
   logoutButton: {
     marginTop: 16,
     backgroundColor: '#FF6B6B',

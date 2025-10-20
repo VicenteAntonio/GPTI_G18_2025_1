@@ -1,59 +1,43 @@
 # Changelog
 
-Todos los cambios notables en este proyecto serán documentados en este archivo.
+All notable changes to this project will be documented in this file.
 
-El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/),
-y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-10-20
+
 ### Added
-- Sistema de base de datos simplificado (`DatabaseService`)
-- Botón de "Volver" en pantalla de meditación
-- Auto-inicio de sesiones al abrir una lección
-- Temporizador visual de dos líneas (tiempo actual / duración total)
+- Simplified database system (`DatabaseService`)
+- Local storage with AsyncStorage
+- "Back" button in meditation screen
+- Auto-start of sessions when opening a lesson
+- Two-line visual timer (current time / total duration)
 
 ### Changed
-- Botón de pause ahora cambia de color (verde/rojo) según estado
-- Simplificación de tipos: `User` y `Lesson`
-- Actualización a Expo SDK 54
-- React 19.1.0 y React Native 0.81.4
+- Pause button now changes color (green/red) according to state
+- Type simplification: `User` and `Lesson`
+- Update to Expo SDK 54
+- React 19.1.0 and React Native 0.81.4
 
 ### Fixed
-- Funcionalidad de pause en modo simulado
-- Limpieza apropiada de intervalos al pausar/salir
+- Pause functionality in simulated mode
+- Proper cleanup of intervals when pausing/exiting
 
-## [1.0.0] - 2025-10-20
+## [1.0.0] - 2025-10-15
 
 ### Added
-- Navegación con Bottom Tabs (Home, Meditation, Profile)
-- Pantalla principal con sesiones de meditación
-- Reproductor de audio básico con play/pause
-- Sistema de categorías (Mindfulness, Sueño, Ansiedad, Concentración, Respiración)
-- Almacenamiento local con AsyncStorage
-- Seguimiento de progreso y estadísticas de usuario
-- Componentes reutilizables (Button, MeditationCard)
-- Documentación inicial del proyecto
+- Navigation with Bottom Tabs (Home, Meditation, Profile)
+- Main screen with meditation sessions
+- User progress tracking and statistics
+- Reusable components (Button, MeditationCard)
+- Initial project documentation
 
 ### Technical
-- Configuración de Expo y React Native
-- Integración de React Navigation
-- TypeScript en todo el proyecto
-- Estructura modular de carpetas
-
----
-
-## Tipos de cambios
-
-- `Added` - Para nuevas funcionalidades
-- `Changed` - Para cambios en funcionalidades existentes
-- `Deprecated` - Para funcionalidades que serán eliminadas
-- `Removed` - Para funcionalidades eliminadas
-- `Fixed` - Para corrección de bugs
-- `Security` - Para vulnerabilidades de seguridad
-
----
-
-[Unreleased]: https://github.com/tu-usuario/tu-repo/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/tu-usuario/tu-repo/releases/tag/v1.0.0
+- Expo and React Native configuration
+- React Navigation integration
+- TypeScript throughout the project
+- Modular folder structure
 

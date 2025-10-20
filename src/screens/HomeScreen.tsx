@@ -3,18 +3,19 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   SafeAreaView,
   RefreshControl,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { MeditationCard } from '../components/MeditationCard';
 import { Button } from '../components/Button';
 import { MEDITATION_SESSIONS, MEDITATION_CATEGORIES } from '../constants';
 import { StorageService } from '../services/StorageService';
-import { MeditationSession, UserProgress } from '../types';
+import { AuthService } from '../services/AuthService';
+import { MeditationSession, UserProgress, User } from '../types';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MainTabs'>;
@@ -29,14 +30,34 @@ const HomeScreen: React.FC = () => {
     loadData();
   }, []);
 
+  // Recargar datos cuando la pantalla recibe foco (después de completar una sesión)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [])
+  );
+
   const loadData = async () => {
     try {
-      const [progress, completedSessions] = await Promise.all([
-        StorageService.getUserProgress(),
-        StorageService.getCompletedSessions(),
-      ]);
+      // Obtener usuario actual
+      const currentUser = await AuthService.getCurrentLoggedUser();
+      
+      if (currentUser) {
+        // Usar datos del usuario actual
+        const progress = {
+          totalSessions: currentUser.totalSessions,
+          totalMinutes: currentUser.totalMinutes,
+          currentStreak: currentUser.streak,
+        };
+        setUserProgress(progress as any);
+      } else {
+        // Fallback al sistema legacy
+        const progress = await StorageService.getUserProgress();
+        setUserProgress(progress);
+      }
 
-      setUserProgress(progress);
+      // Obtener sesiones completadas para marcarlas
+      const completedSessions = await StorageService.getCompletedSessions();
 
       // Mark sessions as completed based on stored data
       const sessionsWithProgress = MEDITATION_SESSIONS.map(session => ({
@@ -60,10 +81,6 @@ const HomeScreen: React.FC = () => {
     navigation.navigate('Meditation', { sessionId: session.id });
   };
 
-  const renderSession = ({ item }: { item: MeditationSession }) => (
-    <MeditationCard session={item} onPress={() => handleSessionPress(item)} />
-  );
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Buenos días';
@@ -73,57 +90,60 @@ const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.greeting}>{getGreeting()}! 🌅</Text>
-        <Text style={styles.subtitle}>Encuentra tu momento de paz</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View style={styles.header}>
+          <Text style={styles.greeting}>{getGreeting()}! 🌅</Text>
+          <Text style={styles.subtitle}>Encuentra tu momento de paz</Text>
 
-        {userProgress && (
-          <View style={styles.statsContainer}>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>{userProgress.totalSessions}</Text>
-              <Text style={styles.statLabel}>Sesiones</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>{userProgress.totalMinutes}</Text>
-              <Text style={styles.statLabel}>Minutos</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statNumber}>{userProgress.currentStreak}</Text>
-              <Text style={styles.statLabel}>Racha</Text>
-            </View>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.categoriesContainer}>
-        <Text style={styles.sectionTitle}>Categorías</Text>
-        <FlatList
-          data={MEDITATION_CATEGORIES}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={[styles.categoryChip, { backgroundColor: item.color }]}>
-              <Text style={styles.categoryText}>{item.icon} {item.name}</Text>
+          {userProgress && (
+            <View style={styles.statsContainer}>
+              <View style={styles.stat}>
+                <Text style={styles.statNumber}>{userProgress.totalSessions}</Text>
+                <Text style={styles.statLabel}>Sesiones</Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={styles.statNumber}>{userProgress.totalMinutes}</Text>
+                <Text style={styles.statLabel}>Minutos</Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={styles.statNumber}>{userProgress.currentStreak}</Text>
+                <Text style={styles.statLabel}>Racha</Text>
+              </View>
             </View>
           )}
-          contentContainerStyle={styles.categoriesList}
-        />
-      </View>
+        </View>
 
-      <View style={styles.sessionsContainer}>
-        <Text style={styles.sectionTitle}>Sesiones Disponibles</Text>
-        <FlatList
-          data={sessions}
-          renderItem={renderSession}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          contentContainerStyle={styles.sessionsList}
-        />
-      </View>
+        <View style={styles.categoriesContainer}>
+          <Text style={styles.sectionTitle}>Categorías</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesList}
+          >
+            {MEDITATION_CATEGORIES.map((item) => (
+              <View key={item.id} style={[styles.categoryChip, { backgroundColor: item.color }]}>
+                <Text style={styles.categoryText}>{item.icon} {item.name}</Text>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.sessionsContainer}>
+          <Text style={styles.sectionTitle}>Sesiones Disponibles</Text>
+          {sessions.map((session) => (
+            <MeditationCard
+              key={session.id}
+              session={session}
+              onPress={() => handleSessionPress(session)}
+            />
+          ))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -200,11 +220,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   sessionsContainer: {
-    flex: 1,
     padding: 20,
-  },
-  sessionsList: {
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
 });
 

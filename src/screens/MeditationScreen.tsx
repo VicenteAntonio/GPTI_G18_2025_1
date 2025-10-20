@@ -14,6 +14,8 @@ import { Audio } from 'expo-av';
 import { Button } from '../components/Button';
 import { MEDITATION_SESSIONS } from '../constants';
 import { StorageService } from '../services/StorageService';
+import { DatabaseService } from '../services/DatabaseService';
+import { AuthService } from '../services/AuthService';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
 type MeditationScreenRouteProp = RouteProp<RootStackParamList, 'Meditation'>;
@@ -206,19 +208,57 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
   };
 
   const completeSession = async () => {
-    Alert.alert(
-      '¡Sesión Completada!',
-      'Has completado tu sesión de meditación. ¡Excelente trabajo!',
-      [
-        {
-          text: 'OK',
-          onPress: async () => {
-            await StorageService.markSessionAsCompleted(session.id);
-            navigation.goBack();
+    try {
+      // Obtener usuario actual
+      const currentUser = await AuthService.getCurrentLoggedUser();
+      if (!currentUser) {
+        Alert.alert('Error', 'No se pudo encontrar el usuario actual');
+        return;
+      }
+
+      // Calcular minutos de la sesión
+      const sessionMinutes = session.duration; // Ya está en minutos
+
+      // Obtener el ID de la categoría
+      const categoryId = session.category.id;
+
+      // Completar lección y calcular puntos
+      const result = await DatabaseService.completeLesson(
+        currentUser.email, 
+        sessionMinutes, 
+        categoryId
+      );
+
+      if (!result) {
+        Alert.alert('Error', 'No se pudo registrar la sesión');
+        return;
+      }
+
+      const { betterfliesEarned } = result;
+
+      // Marcar como completada (legacy)
+      await StorageService.markSessionAsCompleted(session.id);
+
+      // Mostrar resumen con puntos ganados
+      Alert.alert(
+        '¡Sesión Completada! 🎉',
+        `¡Excelente trabajo!\n\n` +
+        `⏱️ Minutos: ${Math.floor(sessionMinutes)}\n` +
+        `🦋 Betterflies ganadas: +${betterfliesEarned}\n` +
+        `🔥 Racha: ${result.user.streak} días`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.goBack();
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    } catch (error) {
+      console.error('Error al completar sesión:', error);
+      Alert.alert('Error', 'Hubo un problema al guardar tu progreso');
+    }
   };
 
   const handlePlayPause = async () => {

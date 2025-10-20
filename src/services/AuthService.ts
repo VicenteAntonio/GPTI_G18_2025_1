@@ -57,6 +57,9 @@ export class AuthService {
         return { success: false, error: 'Contraseña incorrecta' };
       }
 
+      // Verificar y actualizar racha según última lección
+      await DatabaseService.checkAndResetStreak(user);
+
       // Crear sesión
       const session: AuthSession = {
         isLoggedIn: true,
@@ -94,11 +97,15 @@ export class AuthService {
         email,
         password,
         streak: 0,
+        sleepCompleted: 0,
         relaxationCompleted: 0,
         selfAwarenessCompleted: 0,
-        concentrationCompleted: 0,
         longestStreak: 0,
         achievements: [],
+        betterflies: 0,
+        totalSessions: 0,
+        totalMinutes: 0,
+        lastLessonDate: null,
       };
 
       await DatabaseService.saveUser(newUser);

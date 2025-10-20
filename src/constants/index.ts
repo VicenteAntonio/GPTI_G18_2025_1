@@ -2,34 +2,22 @@ import { MeditationCategory } from '../types';
 
 export const MEDITATION_CATEGORIES: MeditationCategory[] = [
   {
-    id: 'mindfulness',
-    name: 'Mindfulness',
-    color: '#FF6B6B',
-    icon: '🧘',
-  },
-  {
     id: 'sleep',
     name: 'Sueño',
     color: '#4ECDC4',
     icon: '😴',
   },
   {
-    id: 'anxiety',
-    name: 'Ansiedad',
-    color: '#45B7D1',
-    icon: '🌊',
+    id: 'relaxation',
+    name: 'Relajación',
+    color: '#FF6B6B',
+    icon: '🧘',
   },
   {
-    id: 'focus',
-    name: 'Concentración',
+    id: 'selfawareness',
+    name: 'Autoconciencia',
     color: '#96CEB4',
-    icon: '🎯',
-  },
-  {
-    id: 'breathing',
-    name: 'Respiración',
-    color: '#FFEAA7',
-    icon: '💨',
+    icon: '🌸',
   },
 ];
 
@@ -48,43 +36,27 @@ export const STORAGE_KEYS = {
 
 export const MEDITATION_SESSIONS = [
   {
-    id: 'morning-mindfulness',
-    title: 'Meditación Matutina',
-    description: 'Una meditación suave para comenzar el día con claridad mental',
-    duration: 10,
-    category: MEDITATION_CATEGORIES[0], // mindfulness
-    imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
-  },
-  {
-    id: 'sleep-relaxation',
-    title: 'Relajación para Dormir',
-    description: 'Una sesión profunda para preparar tu mente para el descanso',
-    duration: 15,
-    category: MEDITATION_CATEGORIES[1], // sleep
+    id: 'sleep-test',
+    title: 'Sueño Rápido',
+    description: 'Sesión express de sueño (7 seg - PRUEBA)',
+    duration: 7 / 60, // 7 segundos para pruebas
+    category: MEDITATION_CATEGORIES[0], // sueño
     imageUrl: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400',
   },
   {
-    id: 'anxiety-relief',
-    title: 'Alivio de Ansiedad',
-    description: 'Técnicas de respiración para calmar la mente ansiosa',
-    duration: 12,
-    category: MEDITATION_CATEGORIES[2], // anxiety
-    imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
-  },
-  {
-    id: 'focus-boost',
-    title: 'Impulso de Concentración',
-    description: 'Mejora tu enfoque y productividad mental',
-    duration: 8,
-    category: MEDITATION_CATEGORIES[3], // focus
-    imageUrl: 'https://images.unsplash.com/photo-1486312338219-ce68e2c6de8f?w=400',
-  },
-  {
-    id: 'breathing-exercise',
-    title: 'Ejercicio de Respiración',
-    description: 'Técnicas básicas de respiración consciente',
-    duration: 5,
-    category: MEDITATION_CATEGORIES[4], // breathing
+    id: 'relaxation-morning',
+    title: 'Relajación Matutina',
+    description: 'Comienza tu día con paz y tranquilidad',
+    duration: 10,
+    category: MEDITATION_CATEGORIES[1], // relajación
     imageUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400',
+  },
+  {
+    id: 'selfawareness-mindful',
+    title: 'Consciencia Plena',
+    description: 'Conecta con tu yo interior y el momento presente',
+    duration: 10,
+    category: MEDITATION_CATEGORIES[2], // autoconciencia
+    imageUrl: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=400',
   },
 ];

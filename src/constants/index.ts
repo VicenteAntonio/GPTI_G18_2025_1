@@ -34,8 +34,16 @@ export const MEDITATION_CATEGORIES: MeditationCategory[] = [
 ];
 
 export const STORAGE_KEYS = {
+  // Legacy keys (mantener compatibilidad)
   USER_PROGRESS: '@user_progress',
   COMPLETED_SESSIONS: '@completed_sessions',
+  
+  // New storage keys
+  AUDIO_TRACKS: '@audio_tracks',
+  AUDIO_METADATA: '@audio_metadata',
+  LESSONS: '@meditation_lessons',
+  USERS: '@users',
+  CURRENT_USER: '@current_user',
 };
 
 export const MEDITATION_SESSIONS = [

@@ -1,6 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserProgress, MeditationSession } from '../types';
 import { STORAGE_KEYS } from '../constants';
+
+interface UserProgress {
+  userId: string;
+  totalSessions: number;
+  totalMinutes: number;
+  currentStreak: number;
+  longestStreak: number;
+  completedSessions: string[];
+  favoriteCategories: string[];
+}
 
 export class StorageService {
   static async getUserProgress(): Promise<UserProgress> {
@@ -67,6 +76,7 @@ export class StorageService {
 
   private static getDefaultProgress(): UserProgress {
     return {
+      userId: 'legacy-user',
       totalSessions: 0,
       totalMinutes: 0,
       currentStreak: 0,
@@ -76,3 +86,11 @@ export class StorageService {
     };
   }
 }
+
+/**
+ * NOTA: Este servicio se mantiene para compatibilidad con código legacy.
+ * Para nuevas funcionalidades, usa:
+ * - AudioStorageService: Para gestionar audios
+ * - LessonStorageService: Para gestionar lecciones
+ * - UserStorageService: Para gestionar usuarios
+ */

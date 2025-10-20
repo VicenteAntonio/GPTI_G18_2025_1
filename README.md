@@ -4,7 +4,7 @@ Una aplicación móvil desarrollada en React Native con TypeScript y Expo para s
 
 ## 🚀 Inicio Rápido
 
-⚠️ **IMPORTANTE**: Si la app se queda cargando infinitamente, consulta [`INSTRUCCIONES_EJECUCION.md`](./INSTRUCCIONES_EJECUCION.md)
+⚠️ **IMPORTANTE**: Si la app se queda cargando infinitamente, consulta [`INSTRUCCIONES_EJECUCION.md`](./docs/INSTRUCCIONES_EJECUCION.md)
 
 ### Pasos para Ejecutar
 
@@ -32,18 +32,22 @@ npm run init
 ## Características
 
 ### Funcionalidades Principales
-- 🧘‍♀️ Sesiones de meditación por categorías (relajación, autoconciencia, concentración)
+- 🔐 Sistema de autenticación (login/registro)
+- 🧘‍♀️ 3 categorías de meditación: Sueño, Relajación, Autoconciencia
 - ▶️ Reproductor con auto-inicio y pause/resume
-- 📊 Seguimiento de progreso y estadísticas
-- 🎯 Sistema de rachas diarias
-- 💾 Base de datos simple con AsyncStorage
-- 🎨 Interfaz moderna y fácil de usar
+- 📊 Seguimiento de progreso y estadísticas sincronizadas
+- 🎯 Sistema de rachas basado en fechas (reseteo automático después de 2+ días)
+- 🦋 Sistema de puntos (betterflies) con fórmula: `minutos × 2 + floor(racha / 3) + 1`
+- 💾 Base de datos local con AsyncStorage
+- 🎨 Interfaz moderna con animaciones y diseño intuitivo
+- 📈 Categoría favorita con desglose visual por tipo
 
 ### Base de Datos
-- 👤 **Usuarios**: username, email, password, rachas, progreso
+- 👤 **Usuarios**: username, email, password, rachas, progreso, betterflies, estadísticas
 - 📚 **Lecciones**: tipo, nombre, ID, tiempo, audio
+- 🔐 **Sesiones**: autenticación y persistencia de login
 
-Ver documentación en [`BASE_DE_DATOS.md`](./BASE_DE_DATOS.md)
+Ver documentación completa en [`BASE_DE_DATOS.md`](./docs/BASE_DE_DATOS.md)
 
 ## Tecnologías Utilizadas
 
@@ -56,23 +60,41 @@ Ver documentación en [`BASE_DE_DATOS.md`](./BASE_DE_DATOS.md)
 ## Estructura del Proyecto
 
 ```
-src/
-├── components/          # Componentes reutilizables
-│   ├── Button.tsx      # Componente de botón
-│   └── MeditationCard.tsx # Tarjeta de sesión de meditación
-├── screens/            # Pantallas de la aplicación
-│   ├── HomeScreen.tsx  # Pantalla principal
-│   ├── MeditationScreen.tsx # Pantalla de meditación
-│   └── ProfileScreen.tsx   # Pantalla de perfil
-├── services/           # Servicios y lógica de negocio
-│   └── StorageService.ts   # Manejo del almacenamiento local
-├── types/             # Definiciones de tipos TypeScript
-│   └── index.ts       # Tipos de la aplicación
-├── navigation/        # Configuración de navegación
-│   └── AppNavigator.tsx # Navegador principal
-├── constants/         # Constantes y datos estáticos
-│   └── index.ts       # Categorías y sesiones de meditación
-└── utils/             # Utilidades auxiliares
+GPTI_G18_2025_1/
+├── src/
+│   ├── components/          # Componentes reutilizables
+│   │   ├── Button.tsx       # Componente de botón
+│   │   └── MeditationCard.tsx # Tarjeta de sesión de meditación
+│   ├── screens/             # Pantallas de la aplicación
+│   │   ├── SplashScreen.tsx     # Animación de inicio
+│   │   ├── LoginScreen.tsx      # Pantalla de login
+│   │   ├── RegisterScreen.tsx   # Pantalla de registro
+│   │   ├── HomeScreen.tsx       # Pantalla principal
+│   │   ├── MeditationScreen.tsx # Pantalla de meditación
+│   │   └── ProfileScreen.tsx    # Pantalla de perfil
+│   ├── services/            # Servicios y lógica de negocio
+│   │   ├── AuthService.ts       # Autenticación y sesiones
+│   │   ├── DatabaseService.ts   # Gestión de datos (usuarios y lecciones)
+│   │   └── StorageService.ts    # Legacy storage
+│   ├── types/              # Definiciones de tipos TypeScript
+│   │   └── index.ts        # User, Lesson, AuthSession, etc.
+│   ├── navigation/         # Configuración de navegación
+│   │   └── AppNavigator.tsx # Navegador con tabs y stack
+│   └── constants/          # Constantes y datos estáticos
+│       └── index.ts        # Categorías (3) y sesiones (3)
+├── docs/                   # Documentación del proyecto
+│   ├── BASE_DE_DATOS.md         # Esquema y lógica de BD
+│   └── INSTRUCCIONES_EJECUCION.md # Guía de instalación
+├── scripts/                # Scripts de automatización
+│   ├── init.sh             # Inicialización (Linux/Mac)
+│   └── clean_start.sh      # Limpieza completa e inicio
+├── assets/                 # Recursos multimedia
+│   ├── splash.png          # Logo de la aplicación
+│   └── Betterflie.png      # Icono de betterflies
+├── App.tsx                 # Punto de entrada principal
+├── package.json            # Dependencias y scripts
+├── changelog.md            # Registro de cambios
+└── README.md               # Este archivo
 ```
 
 ## 📱 Uso con Expo Go
@@ -104,33 +126,50 @@ src/
 ## 🛠️ Scripts Disponibles
 
 - `npm start` - Inicia el servidor de desarrollo
+- `npm run start:lan` - Inicia con LAN (recomendado para móvil)
+- `npm run start:tunnel` - Inicia con tunnel (si LAN no funciona)
 - `npm run android` - Ejecuta en Android
 - `npm run ios` - Ejecuta en iOS
 - `npm run web` - Ejecuta en navegador web
-- `npm run init` - Script de inicialización automático
-- `./scripts/init.sh` - Script de inicialización en Linux/Mac
-- `scripts\init.bat` - Script de inicialización en Windows
+- `./scripts/clean_start.sh` - Limpieza completa e inicio desde cero
+
+Ver más comandos y opciones en [`INSTRUCCIONES_EJECUCION.md`](./docs/INSTRUCCIONES_EJECUCION.md)
 
 ## Características de la Aplicación
 
-### Pantalla Principal
+### Splash Screen
+- Animación de fade-in secuencial
+- Logo de la aplicación
+- Transición suave a login o app principal
+
+### Pantallas de Autenticación
+- **Login**: Email y contraseña con validación
+- **Registro**: Crear cuenta con username, email y contraseña
+- Persistencia de sesión con AsyncStorage
+- Verificación automática de racha al iniciar sesión
+
+### Pantalla Principal (Home)
 - Saludo personalizado según la hora del día
-- Estadísticas rápidas del progreso del usuario
-- Categorías de meditación disponibles
-- Lista de sesiones de meditación disponibles
+- Estadísticas en tiempo real (sesiones, minutos, racha)
+- 3 categorías de meditación con colores diferenciados
+- 3 sesiones disponibles (una por categoría)
+- Pull-to-refresh para actualizar datos
 
 ### Pantalla de Meditación
-- Reproductor de meditación con controles de play/pause
-- Barra de progreso visual
-- Información de la sesión actual
-- Marcado automático de sesión completada
+- Auto-inicio de sesión al abrir
+- Reproductor con controles de play/pause (cambia de color)
+- Timer visual en dos líneas (tiempo actual / duración total)
+- Confirmación antes de salir sin completar
+- Resumen al finalizar con betterflies ganadas y racha
 
 ### Pantalla de Perfil
-- Estadísticas detalladas del progreso
-- Seguimiento de rachas diarias
-- Categorías favoritas
-- Sistema de logros
-- Opción de reiniciar progreso
+- Información del usuario (username, email)
+- Display de betterflies con icono personalizado
+- Estadísticas detalladas (sesiones, minutos, rachas)
+- **Tipo de sesión favorito** con desglose visual
+- Breakdown por categoría (Sueño, Relajación, Autoconciencia)
+- Botón de cerrar sesión con confirmación
+- Sistema de logros (comentado, pendiente de implementación)
 
 ## Personalización
 
@@ -159,18 +198,19 @@ Los estilos están definidos en cada componente usando StyleSheet de React Nativ
 
 ## 📚 Documentación
 
-- **[BASE_DE_DATOS.md](./BASE_DE_DATOS.md)** - Documentación de la base de datos
-- **[INSTRUCCIONES_EJECUCION.md](./INSTRUCCIONES_EJECUCION.md)** - Troubleshooting y ejecución
+- **[BASE_DE_DATOS.md](./docs/BASE_DE_DATOS.md)** - Documentación de la base de datos
+- **[INSTRUCCIONES_EJECUCION.md](./docs/INSTRUCCIONES_EJECUCION.md)** - Troubleshooting y ejecución
 
 ## Próximas Mejoras
 
-- [ ] Botón de reiniciar sesión
-- [ ] Adelantar/retroceder 10 segundos
+- [ ] Onboarding de usuarios 
 - [ ] Control de volumen
 - [ ] Notificaciones push para recordatorios
-- [ ] Sincronización en la nube
 - [ ] Temas oscuro/claro
 - [ ] Exportar/importar datos
+- [ ] Ranking de usuarios
+- [ ] Acceso directo a chatbots de Telegram 
+- [ ] Optimización de rendimiento general de la aplicación
 
 ## Contribución
 

@@ -10,12 +10,22 @@ import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import { AuthService } from './src/services/AuthService';
+import { DatabaseService } from './src/services/DatabaseService';
 
 type AppState = 'splash' | 'login' | 'register' | 'app';
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>('splash');
   const [checkAuth, setCheckAuth] = useState(0);
+
+  // Inicializar base de datos (seed) al montar la app
+  useEffect(() => {
+    const initializeDatabase = async () => {
+      await DatabaseService.seedDatabase();
+    };
+    
+    initializeDatabase();
+  }, []);
 
   // Verificar sesión cuando la app vuelve al foreground
   useEffect(() => {

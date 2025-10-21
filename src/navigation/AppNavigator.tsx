@@ -6,10 +6,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
 import MeditationScreen from '../screens/MeditationScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import DevToolsScreen from '../screens/DevToolsScreen';
 
 export type RootStackParamList = {
   MainTabs: undefined;
   Meditation: { sessionId: string };
+  DevTools: undefined;
 };
 
 export type MainTabParamList = {
@@ -87,6 +89,14 @@ const AppNavigator = () => {
         component={MeditationScreen}
         options={{
           title: 'Meditación',
+          headerBackTitleVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="DevTools"
+        component={DevToolsScreen}
+        options={{
+          title: '🛠️ Dev Tools',
           headerBackTitleVisible: false,
         }}
       />

@@ -6,6 +6,10 @@ Una aplicación móvil desarrollada en React Native con TypeScript y Expo para s
 
 ⚠️ **IMPORTANTE**: Si la app se queda cargando infinitamente, consulta [`INSTRUCCIONES_EJECUCION.md`](./docs/INSTRUCCIONES_EJECUCION.md)
 
+💡 **PARA DESARROLLO**: Ver [QUICK_SETUP.md](./QUICK_SETUP.md) para atajos y herramientas útiles
+
+🔐 **ACCESO ADMIN**: Ver [ADMIN_QUICK_GUIDE.md](./ADMIN_QUICK_GUIDE.md) para credenciales y DevTools
+
 ### Pasos para Ejecutar
 
 ```bash
@@ -33,11 +37,14 @@ npm run init
 
 ### Funcionalidades Principales
 - 🔐 Sistema de autenticación (login/registro)
+- 👤 Sistema de roles (usuarios y administradores)
+- 🛠️ Panel de administración (DevTools) para gestión de BD
 - 🧘‍♀️ 3 categorías de meditación: Sueño, Relajación, Autoconciencia
+- 🎵 Audios generados con IA (ElevenLabs)
 - ▶️ Reproductor con auto-inicio y pause/resume
 - 📊 Seguimiento de progreso y estadísticas sincronizadas
 - 🎯 Sistema de rachas basado en fechas (reseteo automático después de 2+ días)
-- 🦋 Sistema de puntos (betterflies) con fórmula: `minutos × 2 + floor(racha / 3) + 1`
+- 🦋 Sistema de puntos (betterflies) con fórmula: `floor(minutos) × 2 + floor(racha / 3) + 1`
 - 💾 Base de datos local con AsyncStorage
 - 🎨 Interfaz moderna con animaciones y diseño intuitivo
 - 📈 Categoría favorita con desglose visual por tipo
@@ -87,10 +94,18 @@ GPTI_G18_2025_1/
 │   └── INSTRUCCIONES_EJECUCION.md # Guía de instalación
 ├── scripts/                # Scripts de automatización
 │   ├── init.sh             # Inicialización (Linux/Mac)
-│   └── clean_start.sh      # Limpieza completa e inicio
+│   ├── clean_start.sh      # Limpieza completa e inicio
+│   ├── generate_audio.py   # Generador de pistas de audio
+│   ├── meditation_scripts.py # Textos de meditación
+│   ├── requirements.txt    # Dependencias Python
+│   └── README_AUDIO.md     # Documentación de audio
 ├── assets/                 # Recursos multimedia
 │   ├── splash.png          # Logo de la aplicación
-│   └── Betterflie.png      # Icono de betterflies
+│   ├── Betterflie.png      # Icono de betterflies
+│   └── audio/              # Pistas de audio generadas por IA
+│       ├── sleep-test.mp3
+│       ├── relaxation-morning.mp3
+│       └── selfawareness-mindful.mp3
 ├── App.tsx                 # Punto de entrada principal
 ├── package.json            # Dependencias y scripts
 ├── changelog.md            # Registro de cambios
@@ -125,6 +140,7 @@ GPTI_G18_2025_1/
 
 ## 🛠️ Scripts Disponibles
 
+### Scripts de Desarrollo
 - `npm start` - Inicia el servidor de desarrollo
 - `npm run start:lan` - Inicia con LAN (recomendado para móvil)
 - `npm run start:tunnel` - Inicia con tunnel (si LAN no funciona)
@@ -132,6 +148,14 @@ GPTI_G18_2025_1/
 - `npm run ios` - Ejecuta en iOS
 - `npm run web` - Ejecuta en navegador web
 - `./scripts/clean_start.sh` - Limpieza completa e inicio desde cero
+
+### Scripts de Audio (ElevenLabs)
+- `npm run generate-audio` - Genera las pistas de audio con IA
+- `npm run test-audio` - Prueba que los archivos de audio existen
+- `npm run regenerate-audio` - Regenera todos los audios (bash script completo)
+
+### Scripts de Administración
+- `npm run admin-info` - Muestra credenciales del usuario administrador
 
 Ver más comandos y opciones en [`INSTRUCCIONES_EJECUCION.md`](./docs/INSTRUCCIONES_EJECUCION.md)
 
@@ -182,6 +206,46 @@ Las categorías se definen en el mismo archivo en el array `MEDITATION_CATEGORIE
 ### Estilos y Tema
 Los estilos están definidos en cada componente usando StyleSheet de React Native. Puedes modificar los colores, fuentes y espaciado según tus preferencias.
 
+## 🎵 Generación de Pistas de Audio
+
+Las pistas de audio se generan usando **ElevenLabs AI** para crear meditaciones guiadas de alta calidad.
+
+### Pistas Disponibles
+
+1. **Sueño Rápido** (`sleep-test.mp3`) - ~12 segundos - Sesión de prueba
+2. **Relajación Matutina** (`relaxation-morning.mp3`) - ~1.6 minutos
+3. **Consciencia Plena** (`selfawareness-mindful.mp3`) - ~1.9 minutos
+
+### Regenerar los Audios
+
+Si necesitas regenerar las pistas de audio:
+
+```bash
+# 1. Asegúrate de tener Python 3.7+ instalado
+python3 --version
+
+# 2. Instala las dependencias
+pip3 install -r scripts/requirements.txt
+
+# 3. Configura la API key de ElevenLabs en .env
+echo "ELEVENLABS_API_KEY=tu_api_key_aqui" > .env
+
+# 4. Genera los audios
+python3 scripts/generate_audio.py
+```
+
+Los archivos se generarán en `assets/audio/`.
+
+### Personalizar los Textos de Meditación
+
+Para modificar los textos de las meditaciones guiadas:
+
+1. Edita `scripts/meditation_scripts.py`
+2. Modifica el contenido en el diccionario `MEDITATION_TEXTS`
+3. Ejecuta `python3 scripts/generate_audio.py` para regenerar
+
+📖 **Documentación completa**: [`AUDIO_GENERATION.md`](./docs/AUDIO_GENERATION.md)
+
 ## Desarrollo
 
 ### Scripts Disponibles
@@ -199,7 +263,10 @@ Los estilos están definidos en cada componente usando StyleSheet de React Nativ
 ## 📚 Documentación
 
 - **[BASE_DE_DATOS.md](./docs/BASE_DE_DATOS.md)** - Documentación de la base de datos
+- **[DATABASE_MANAGEMENT.md](./docs/DATABASE_MANAGEMENT.md)** - Gestión y limpieza de base de datos
+- **[ADMIN_SYSTEM.md](./docs/ADMIN_SYSTEM.md)** - Sistema de roles y administración
 - **[INSTRUCCIONES_EJECUCION.md](./docs/INSTRUCCIONES_EJECUCION.md)** - Troubleshooting y ejecución
+- **[AUDIO_GENERATION.md](./docs/AUDIO_GENERATION.md)** - Generación de pistas de audio con IA
 
 ## Próximas Mejoras
 

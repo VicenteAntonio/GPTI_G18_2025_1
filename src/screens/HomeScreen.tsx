@@ -45,9 +45,9 @@ const HomeScreen: React.FC = () => {
       if (currentUser) {
         // Usar datos del usuario actual
         const progress = {
-          totalSessions: currentUser.totalSessions,
-          totalMinutes: currentUser.totalMinutes,
-          currentStreak: currentUser.streak,
+          totalSessions: currentUser.totalSessions || 0,
+          totalMinutes: currentUser.totalMinutes || 0,
+          currentStreak: currentUser.streak || 0,
         };
         setUserProgress(progress as any);
       } else {
@@ -107,7 +107,9 @@ const HomeScreen: React.FC = () => {
                 <Text style={styles.statLabel}>Sesiones</Text>
               </View>
               <View style={styles.stat}>
-                <Text style={styles.statNumber}>{userProgress.totalMinutes}</Text>
+                <Text style={styles.statNumber}>
+                  {(userProgress.totalMinutes || 0).toFixed(2)}
+                </Text>
                 <Text style={styles.statLabel}>Minutos</Text>
               </View>
               <View style={styles.stat}>

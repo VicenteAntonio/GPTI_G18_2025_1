@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 import { Button } from '../components/Button';
 import { StorageService } from '../services/StorageService';
@@ -8,10 +9,15 @@ import { AuthService } from '../services/AuthService';
 import { DatabaseService } from '../services/DatabaseService';
 import { User } from '../types';
 import { MEDITATION_CATEGORIES } from '../constants';
+import { RootStackParamList } from '../navigation/AppNavigator';
+
+type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userProgress, setUserProgress] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -29,13 +35,17 @@ const ProfileScreen: React.FC = () => {
       const user = await AuthService.getCurrentLoggedUser();
       setCurrentUser(user);
       
+      // Verificar si el usuario es administrador
+      const adminStatus = await AuthService.isCurrentUserAdmin();
+      setIsAdmin(adminStatus);
+      
       if (user) {
-        // Usar datos del usuario directamente
+        // Usar datos del usuario directamente con validación
         const progress = {
-          totalSessions: user.totalSessions,
-          totalMinutes: user.totalMinutes, // Ya es entero
-          currentStreak: user.streak,
-          longestStreak: user.longestStreak,
+          totalSessions: user.totalSessions || 0,
+          totalMinutes: user.totalMinutes || 0, // Con 2 decimales
+          currentStreak: user.streak || 0,
+          longestStreak: user.longestStreak || 0,
         };
         setUserProgress(progress);
       } else {
@@ -112,7 +122,9 @@ const ProfileScreen: React.FC = () => {
               <Text style={styles.statLabel}>Sesiones Totales</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{userProgress.totalMinutes}</Text>
+              <Text style={styles.statNumber}>
+                {(userProgress.totalMinutes || 0).toFixed(2)}
+              </Text>
               <Text style={styles.statLabel}>Minutos Meditados</Text>
             </View>
           </View>
@@ -205,6 +217,20 @@ const ProfileScreen: React.FC = () => {
             </View>
           </View>
         </View> */}
+
+        {/* Botón de Admin DevTools */}
+        {isAdmin && (
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.devToolsButton}
+              onPress={() => navigation.navigate('DevTools')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.devToolsButtonText}>🛠️ Herramientas de Desarrollo</Text>
+              <Text style={styles.devToolsButtonSubtext}>Acceso Administrador</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.section}>
           <TouchableOpacity
@@ -456,6 +482,34 @@ const styles = StyleSheet.create({
   //   color: '#7F8C8D',
   //   lineHeight: 20,
   // },
+  devToolsButton: {
+    marginTop: 16,
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#4ECDC4',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  devToolsButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  devToolsButtonSubtext: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+    opacity: 0.9,
+  },
   logoutButton: {
     marginTop: 16,
     backgroundColor: '#FF6B6B',

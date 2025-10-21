@@ -8,7 +8,11 @@
     "start:tunnel": "expo start --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "generate-audio": "python3 scripts/generate_audio.py",
+    "test-audio": "python3 scripts/test_audio.py",
+    "regenerate-audio": "./scripts/regenerate_audio.sh",
+    "admin-info": "node scripts/seed_admin.js"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

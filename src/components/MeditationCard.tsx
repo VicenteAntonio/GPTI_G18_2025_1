@@ -27,7 +27,9 @@ export const MeditationCard: React.FC<MeditationCardProps> = ({
           {session.description}
         </Text>
         <View style={styles.footer}>
-          <Text style={styles.duration}>{session.duration} min</Text>
+          <Text style={styles.duration}>
+            {(session.duration || 0).toFixed(2)} min
+          </Text>
           {session.isCompleted && (
             <Text style={styles.completed}>✓ Completada</Text>
           )}

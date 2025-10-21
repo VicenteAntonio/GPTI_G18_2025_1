@@ -7,6 +7,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2025-10-22
+
+### Added
+- **AI-Generated Audio**: Integration with ElevenLabs API for meditation audio generation
+- **Audio Generation Scripts**: Python scripts to generate meditation audio tracks
+  - `scripts/generate_audio.py` - Main audio generation script
+  - `scripts/meditation_scripts.py` - Meditation text scripts in Spanish
+  - `scripts/test_audio.py` - Audio verification script
+  - `scripts/regenerate_audio.sh` - Automated audio regeneration
+  - `scripts/update_durations.py` - Utility to extract real audio durations
+- **Audio Tracks**: 3 AI-generated meditation tracks with ElevenLabs
+  - `sleep-test.mp3` (~12 seconds)
+  - `relaxation-morning.mp3` (~1.6 minutes)
+  - `selfawareness-mindful.mp3` (~1.9 minutes)
+- **Role System**: User roles (user/admin) for access control
+  - `role` field added to User interface
+  - Admin verification methods in AuthService
+- **Admin System**: Complete administrator functionality
+  - Automatic admin user seed (`admin@meditation.app` / `admin123`)
+  - AdminGuard component for route protection
+  - DevToolsScreen for database management (admin only)
+  - Admin badge display in Profile screen
+  - Admin-only button to access DevTools
+- **Database Management Tools**:
+  - View database statistics (users, lessons, current user)
+  - List all users with details
+  - Clear all users
+  - Clear entire database
+  - Back button in DevTools to return to profile
+- **Automatic Migration**: User migration system for role field and null values
+- **NPM Scripts**:
+  - `npm run generate-audio` - Generate audio tracks
+  - `npm run test-audio` - Verify audio files
+  - `npm run regenerate-audio` - Full audio regeneration
+  - `npm run admin-info` - Display admin credentials
+- **Documentation**:
+  - `docs/AUDIO_GENERATION.md` - Complete audio generation guide
+  - `docs/ADMIN_SYSTEM.md` - Admin system documentation
+  - `docs/DATABASE_MANAGEMENT.md` - Database management guide
+  - `scripts/README_AUDIO.md` - Quick audio setup guide
+  - `ADMIN_QUICK_GUIDE.md` - Quick admin access guide
+  - `CHANGELOG_AUDIO.md` - Audio integration changelog
+  - `CHANGELOG_SISTEMA_ADMIN.md` - Admin system changelog
+
+### Changed
+- **Audio Integration**: Meditation sessions now use real AI-generated audio files
+- **Duration Synchronization**: Session durations now match actual audio file lengths
+  - Sleep Test: 0.20 minutes (was ~0.12)
+  - Relaxation Morning: 1.62 minutes (was 10)
+  - Self-awareness Mindful: 1.87 minutes (was 10)
+- **Decimal Precision**: All minutes now display with 2 decimal places
+  - HomeScreen statistics
+  - ProfileScreen statistics
+  - MeditationScreen duration
+  - MeditationCard duration display
+- **Database Service**: Enhanced with seed and migration capabilities
+- **User Registration**: Now accepts optional `role` parameter (defaults to 'user')
+- **Total Minutes**: Changed from integer to decimal with 2-digit precision
+- **Betterflies Formula**: Updated to use floor(minutes) for calculation
+- **Audio Mode Configuration**: Added iOS/Android audio mode settings
+- **SplashScreen Animation**: Loading bar now uses `scaleX` transform instead of `width`
+
+### Fixed
+- **Null Safety**: Added validation for null/undefined values in:
+  - totalMinutes display (all screens)
+  - session.duration display
+  - User progress loading
+- **Animation Error**: Fixed "width not supported by native animated module" error
+  - Changed from `width` animation to `transform: scaleX`
+- **Navigation**: Corrected AdminGuard redirect route from 'MainApp' to 'MainTabs'
+- **Data Integrity**: Automatic migration fixes null numeric fields (totalMinutes, totalSessions, betterflies)
+
+### Security
+- **Route Protection**: DevToolsScreen protected with AdminGuard
+- **Role Verification**: Automatic admin status check on profile load
+- **Access Control**: Non-admin users automatically redirected from protected routes
+- **Seed Safety**: Admin user seed doesn't create duplicates
+
+### Technical
+- **ElevenLabs Integration**:
+  - Model: eleven_multilingual_v2 (Spanish support)
+  - Voice: JBFqnCBsd6RMkjVDRZzb (calm, soft voice)
+  - Format: MP3, 44.1kHz, 128kbps
+- **Audio Files**: Stored in `assets/audio/` (not tracked in git)
+- **Python Dependencies**: `elevenlabs`, `python-dotenv`
+- **Environment Variables**: `.env` file for ElevenLabs API key
+- **Database Migration**: Automatic role field addition and null value correction
+
 ## [1.3.0] - 2025-10-21
 
 ### Added

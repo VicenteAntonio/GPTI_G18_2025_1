@@ -133,8 +133,23 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const loadSound = async () => {
     try {
+      // Verificar que la sesión tenga un archivo de audio
+      if (!session.audioFile) {
+        console.warn('No audio file found for session, simulating playback');
+        simulateAudioPlayback();
+        return;
+      }
+
+      // Configurar el modo de audio
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
+      });
+
+      // Cargar el archivo de audio específico de la sesión
       const { sound: newSound } = await Audio.Sound.createAsync(
-        require('../../assets/meditation-audio.mp3'), // Placeholder audio file
+        session.audioFile,
         { shouldPlay: true } // Iniciar reproducción automáticamente
       );
 
@@ -155,8 +170,14 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
       setIsPlaying(true);
     } catch (error) {
       console.error('Error loading sound:', error);
-      // For demo purposes, we'll simulate audio playback
-      simulateAudioPlayback();
+      console.error('Session ID:', session?.id);
+      console.error('Audio file:', session?.audioFile);
+      // Si hay error al cargar el audio, simular la reproducción
+      Alert.alert(
+        'Audio no disponible',
+        'El archivo de audio no se pudo cargar. Se simulará la sesión.',
+        [{ text: 'OK', onPress: () => simulateAudioPlayback() }]
+      );
     }
   };
 
@@ -243,7 +264,7 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
       Alert.alert(
         '¡Sesión Completada! 🎉',
         `¡Excelente trabajo!\n\n` +
-        `⏱️ Minutos: ${Math.floor(sessionMinutes)}\n` +
+        `⏱️ Minutos: ${sessionMinutes.toFixed(2)}\n` +
         `🦋 Betterflies ganadas: +${betterfliesEarned}\n` +
         `🔥 Racha: ${result.user.streak} días`,
         [
@@ -347,7 +368,9 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
 
         <View style={styles.sessionInfo}>
           <Text style={styles.description}>{session.description}</Text>
-          <Text style={styles.duration}>Duración: {session.duration} minutos</Text>
+          <Text style={styles.duration}>
+            Duración: {(session.duration || 0).toFixed(2)} minutos
+          </Text>
         </View>
       </View>
     </SafeAreaView>

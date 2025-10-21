@@ -82,7 +82,8 @@ export class AuthService {
   static async register(
     username: string,
     email: string,
-    password: string
+    password: string,
+    role: 'user' | 'admin' = 'user' // Por defecto usuarios normales
   ): Promise<{ success: boolean; error?: string }> {
     try {
       // Verificar si el usuario ya existe
@@ -96,6 +97,7 @@ export class AuthService {
         username,
         email,
         password,
+        role, // Asignar el rol (user o admin)
         streak: 0,
         sleepCompleted: 0,
         relaxationCompleted: 0,
@@ -154,6 +156,32 @@ export class AuthService {
     } catch (error) {
       console.error('Error obteniendo usuario actual:', error);
       return null;
+    }
+  }
+
+  /**
+   * Verificar si el usuario actual es administrador
+   */
+  static async isCurrentUserAdmin(): Promise<boolean> {
+    try {
+      const user = await this.getCurrentLoggedUser();
+      return user?.role === 'admin';
+    } catch (error) {
+      console.error('Error verificando si es admin:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Verificar si un usuario por email es administrador
+   */
+  static async isUserAdmin(email: string): Promise<boolean> {
+    try {
+      const user = await DatabaseService.getUserByEmail(email);
+      return user?.role === 'admin';
+    } catch (error) {
+      console.error('Error verificando rol de usuario:', error);
+      return false;
     }
   }
 }

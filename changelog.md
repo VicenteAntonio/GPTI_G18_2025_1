@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2025-11-19
+
+### Added
+- **Pantalla de Configuración**: Nueva pantalla de configuración completa
+  - Switch para activar/desactivar notificaciones generales
+  - Configuración de recordatorio diario con selector de hora
+  - Notificaciones por email (preparado para implementación futura)
+  - Control de sonido durante meditaciones
+  - Selector de tema oscuro/claro
+  - Información de la aplicación (Acerca de, Ayuda, Privacidad)
+  - Opción para resetear progreso (preparado para implementación futura)
+  - Acceso desde el botón "⚙️ Configuración" en el perfil
+- **Sistema de Notificaciones Push**: Recordatorios diarios completamente funcionales
+  - `NotificationService.ts` - Servicio completo de gestión de notificaciones
+  - Integración con `expo-notifications@0.29.14`
+  - Selector de hora personalizado con `@react-native-community/datetimepicker@8.2.0`
+  - Modal elegante para selección de hora (nativo en Android/iOS)
+  - Notificaciones recurrentes diarias a hora programada
+  - Persistencia de configuración en AsyncStorage
+  - Solicitud de permisos de notificaciones
+  - Configuración de canal de notificaciones en Android
+  - Mensaje personalizado: "🧘 Momento de Meditar"
+- **Sistema de Temas**: Modo oscuro completo en toda la aplicación
+  - `ThemeContext.tsx` - Contexto global de temas
+  - Hook personalizado `useTheme()` para acceder al tema actual
+  - Paleta de colores completa para modo claro y oscuro
+  - Persistencia de preferencia de tema en AsyncStorage
+  - Cambio instantáneo de tema en toda la aplicación
+  - Todas las pantallas adaptadas (excepto Login/Register por diseño)
+- **Integración con ThemeProvider**: Toda la app envuelta en ThemeProvider
+  - HomeScreen con tema dinámico
+  - ProfileScreen con tema dinámico
+  - MeditationScreen con tema dinámico
+  - SettingsScreen con tema dinámico
+  - MeditationCard componente con tema dinámico
+
+### Changed
+- **ProfileScreen**: 
+  - Botón de configuración agregado para acceder a settings
+  - Ajuste visual del contador de Betterflies (texto oscuro fijo para ambos temas)
+- **App.tsx**: Refactorización para envolver toda la app en ThemeProvider
+- **Navegación**: Ruta "Settings" agregada al stack de navegación
+- **app.json**: Configuración de permisos de notificaciones para Android
+  - Permisos: RECEIVE_BOOT_COMPLETED, VIBRATE, SCHEDULE_EXACT_ALARM
+  - Plugin de expo-notifications configurado
+
+### Fixed
+- Color del número de Betterflies en modo oscuro (ahora siempre se ve correctamente)
+- Trigger de notificaciones usando CalendarTrigger para notificaciones recurrentes
+- Estilos de todas las pantallas para soportar tema dinámico
+
+### Technical Details
+- **Nuevos Archivos**:
+  - `src/contexts/ThemeContext.tsx` - Sistema de temas
+  - `src/services/NotificationService.ts` - Gestión de notificaciones
+  - `src/screens/SettingsScreen.tsx` - Pantalla de configuración
+- **Dependencias Nuevas**:
+  - `expo-notifications@0.29.14`
+  - `@react-native-community/datetimepicker@8.2.0`
+- **Paleta de Colores**:
+  - Modo Claro: Fondo `#F8F9FA`, Tarjetas `#FFFFFF`, Texto `#2C3E50`
+  - Modo Oscuro: Fondo `#121212`, Tarjetas `#2C2C2C`, Texto `#FFFFFF`
+  - Color Primario: `#4ECDC4` (turquesa - igual en ambos modos)
+
 ## [1.5.0] - 2025-10-22
 
 ### Added

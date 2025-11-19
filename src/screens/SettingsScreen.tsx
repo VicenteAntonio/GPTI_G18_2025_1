@@ -16,9 +16,13 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { NotificationService } from '../services/NotificationService';
+import { EmailService } from '../services/EmailService';
+import { AuthService } from '../services/AuthService';
 import { useTheme } from '../contexts/ThemeContext';
 
 type SettingsScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+
+type TimePickerMode = 'push' | 'email';
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<SettingsScreenNavigationProp>();
@@ -29,11 +33,14 @@ const SettingsScreen: React.FC = () => {
   const [dailyReminderEnabled, setDailyReminderEnabled] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   
   // Estados para el selector de hora
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [timePickerMode, setTimePickerMode] = useState<TimePickerMode>('push');
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [reminderTime, setReminderTime] = useState<{ hour: number; minute: number } | null>(null);
+  const [emailReminderTime, setEmailReminderTime] = useState<{ hour: number; minute: number } | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -41,18 +48,36 @@ const SettingsScreen: React.FC = () => {
 
   const loadSettings = async () => {
     try {
-      // Verificar si hay un recordatorio activo
+      // Cargar email del usuario actual
+      const user = await AuthService.getCurrentLoggedUser();
+      if (user) {
+        setCurrentUserEmail(user.email);
+      }
+
+      // Verificar si hay un recordatorio push activo
       const isActive = await NotificationService.isDailyReminderActive();
       setDailyReminderEnabled(isActive);
       
       if (isActive) {
-        // Cargar la hora del recordatorio
+        // Cargar la hora del recordatorio push
         const time = await NotificationService.getDailyReminderTime();
         if (time) {
           setReminderTime(time);
           const date = new Date();
           date.setHours(time.hour, time.minute);
           setSelectedTime(date);
+        }
+      }
+
+      // Verificar si hay un recordatorio por email activo
+      const isEmailActive = await EmailService.isEmailReminderActive();
+      setEmailNotificationsEnabled(isEmailActive);
+      
+      if (isEmailActive) {
+        // Cargar la hora del recordatorio por email
+        const emailTime = await EmailService.getEmailReminderTime();
+        if (emailTime) {
+          setEmailReminderTime({ hour: emailTime.hour, minute: emailTime.minute });
         }
       }
     } catch (error) {
@@ -68,21 +93,24 @@ const SettingsScreen: React.FC = () => {
       setDailyReminderEnabled(false);
       setEmailNotificationsEnabled(false);
       
-      // Cancelar recordatorio si está activo
+      // Cancelar recordatorios si están activos
       await NotificationService.cancelDailyReminder();
+      await EmailService.cancelEmailReminder();
       setReminderTime(null);
+      setEmailReminderTime(null);
     }
   };
 
   const handleDailyReminderToggle = async (value: boolean) => {
     if (value) {
-      // Si se activa, mostrar el selector de hora
+      // Si se activa, mostrar el selector de hora para notificación push
+      setTimePickerMode('push');
       setShowTimePicker(true);
     } else {
       // Si se desactiva, cancelar la notificación
       Alert.alert(
-        'Desactivar Recordatorio',
-        '¿Estás seguro de que quieres desactivar el recordatorio diario?',
+        'Desactivar Recordatorio Push',
+        '¿Estás seguro de que quieres desactivar el recordatorio diario por notificación?',
         [
           {
             text: 'Cancelar',
@@ -95,6 +123,45 @@ const SettingsScreen: React.FC = () => {
               await NotificationService.cancelDailyReminder();
               setDailyReminderEnabled(false);
               setReminderTime(null);
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  const handleEmailNotificationsToggle = async (value: boolean) => {
+    if (value) {
+      // Verificar que haya un email válido
+      if (!currentUserEmail || !EmailService.validateEmail(currentUserEmail)) {
+        Alert.alert(
+          'Email No Disponible',
+          'No se encontró un email válido en tu perfil. Por favor, asegúrate de tener un email registrado.',
+          [{ text: 'Ok' }]
+        );
+        return;
+      }
+      
+      // Si se activa, mostrar el selector de hora para email
+      setTimePickerMode('email');
+      setShowTimePicker(true);
+    } else {
+      // Si se desactiva, cancelar el recordatorio por email
+      Alert.alert(
+        'Desactivar Recordatorio por Email',
+        '¿Estás seguro de que quieres desactivar el recordatorio diario por email?',
+        [
+          {
+            text: 'Cancelar',
+            style: 'cancel',
+          },
+          {
+            text: 'Desactivar',
+            style: 'destructive',
+            onPress: async () => {
+              await EmailService.cancelEmailReminder();
+              setEmailNotificationsEnabled(false);
+              setEmailReminderTime(null);
             },
           },
         ]
@@ -122,28 +189,49 @@ const SettingsScreen: React.FC = () => {
   const confirmTimeSelection = async (date: Date) => {
     const hour = date.getHours();
     const minute = date.getMinutes();
+    const formattedTime = formatTime(hour, minute);
     
     try {
-      const success = await NotificationService.scheduleDailyReminder(hour, minute);
-      
-      if (success) {
-        setDailyReminderEnabled(true);
-        setReminderTime({ hour, minute });
+      if (timePickerMode === 'push') {
+        // Configurar notificación push
+        const success = await NotificationService.scheduleDailyReminder(hour, minute);
         
-        // Formatear la hora para mostrarla
-        const formattedTime = formatTime(hour, minute);
+        if (success) {
+          setDailyReminderEnabled(true);
+          setReminderTime({ hour, minute });
+          
+          Alert.alert(
+            'Recordatorio Push Configurado',
+            `Recibirás una notificación push diaria a las ${formattedTime}`,
+            [{ text: 'Ok' }]
+          );
+        } else {
+          Alert.alert(
+            'Error',
+            'No se pudo configurar el recordatorio push. Asegúrate de haber otorgado permisos para notificaciones.',
+            [{ text: 'Ok' }]
+          );
+        }
+      } else if (timePickerMode === 'email') {
+        // Configurar notificación por email
+        const success = await EmailService.scheduleEmailReminder(hour, minute, currentUserEmail);
         
-        Alert.alert(
-          'Recordatorio Configurado',
-          `Recibirás un recordatorio diario a las ${formattedTime}`,
-          [{ text: 'Ok' }]
-        );
-      } else {
-        Alert.alert(
-          'Error',
-          'No se pudo configurar el recordatorio. Asegúrate de haber otorgado permisos para notificaciones.',
-          [{ text: 'Ok' }]
-        );
+        if (success) {
+          setEmailNotificationsEnabled(true);
+          setEmailReminderTime({ hour, minute });
+          
+          Alert.alert(
+            'Recordatorio por Email Configurado',
+            `Recibirás un email de recordatorio diario a las ${formattedTime} en ${currentUserEmail}\n\nNOTA: Esta función requiere un backend activo para enviar emails reales.`,
+            [{ text: 'Ok' }]
+          );
+        } else {
+          Alert.alert(
+            'Error',
+            'No se pudo configurar el recordatorio por email.',
+            [{ text: 'Ok' }]
+          );
+        }
       }
     } catch (error) {
       console.error('Error setting reminder:', error);
@@ -170,16 +258,58 @@ const SettingsScreen: React.FC = () => {
     return `${h}:${m}`;
   };
 
-  const handleEmailNotificationsToggle = (value: boolean) => {
-    setEmailNotificationsEnabled(value);
-  };
-
   const handleSoundToggle = (value: boolean) => {
     setSoundEnabled(value);
   };
 
   const handleDarkModeToggle = (value: boolean) => {
     setThemeMode(value ? 'dark' : 'light');
+  };
+
+  const handleTestNotification = async () => {
+    Alert.alert(
+      '🔔 Probar Notificaciones',
+      '¿Cuándo quieres recibir la notificación de prueba?',
+      [
+        {
+          text: '5 segundos',
+          onPress: async () => {
+            await NotificationService.scheduleTestNotificationInMinutes(5/60);
+            Alert.alert(
+              'Notificación Programada',
+              '¡Espera 5 segundos! Mantén la app abierta.',
+              [{ text: 'Ok' }]
+            );
+          },
+        },
+        {
+          text: '30 segundos',
+          onPress: async () => {
+            await NotificationService.scheduleTestNotificationInMinutes(0.5);
+            Alert.alert(
+              'Notificación Programada',
+              '¡Espera 30 segundos! Mantén la app abierta.',
+              [{ text: 'Ok' }]
+            );
+          },
+        },
+        {
+          text: '1 minuto',
+          onPress: async () => {
+            await NotificationService.scheduleTestNotificationInMinutes(1);
+            Alert.alert(
+              'Notificación Programada',
+              '¡Espera 1 minuto! Puedes minimizar la app.',
+              [{ text: 'Ok' }]
+            );
+          },
+        },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+      ]
+    );
   };
 
   const handleResetProgress = () => {
@@ -273,10 +403,12 @@ const SettingsScreen: React.FC = () => {
           <View style={[styles.settingItem, !notificationsEnabled && styles.settingItemDisabled]}>
             <View style={styles.settingInfo}>
               <Text style={[styles.settingLabel, !notificationsEnabled && styles.settingLabelDisabled]}>
-                Notificaciones por Email
+                Recordatorio por Email
               </Text>
               <Text style={[styles.settingDescription, !notificationsEnabled && styles.settingDescriptionDisabled]}>
-                Recibe actualizaciones y recordatorios por correo electrónico
+                {emailReminderTime 
+                  ? `Configurado para las ${formatTime(emailReminderTime.hour, emailReminderTime.minute)} - ${currentUserEmail}`
+                  : 'Recibe recordatorios diarios por correo electrónico'}
               </Text>
             </View>
             <Switch
@@ -287,6 +419,24 @@ const SettingsScreen: React.FC = () => {
               thumbColor={emailNotificationsEnabled ? '#FFFFFF' : theme.surface}
             />
           </View>
+
+          {/* Botón de Prueba de Notificaciones - Solo visible si están activadas */}
+          {notificationsEnabled && (
+            <TouchableOpacity
+              style={styles.testNotificationButton}
+              onPress={handleTestNotification}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.testNotificationIcon}>🔔</Text>
+              <View style={styles.testNotificationInfo}>
+                <Text style={styles.testNotificationLabel}>Probar Notificación</Text>
+                <Text style={styles.testNotificationDescription}>
+                  Verifica que las notificaciones funcionen
+                </Text>
+              </View>
+              <Text style={styles.testNotificationArrow}>›</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Sección de Audio */}
@@ -415,7 +565,9 @@ const SettingsScreen: React.FC = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Selecciona la Hora</Text>
             <Text style={styles.modalSubtitle}>
-              ¿A qué hora quieres recibir tu recordatorio diario?
+              {timePickerMode === 'push' 
+                ? '¿A qué hora quieres recibir tu recordatorio por notificación?'
+                : `¿A qué hora quieres recibir tu recordatorio por email a ${currentUserEmail}?`}
             </Text>
             
             <View style={styles.timePickerContainer}>
@@ -554,6 +706,46 @@ const createStyles = (theme: any, notificationsEnabled: boolean) => StyleSheet.c
     fontSize: 24,
     color: theme.border,
     fontWeight: '300',
+  },
+  testNotificationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.primary,
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 12,
+    shadowColor: theme.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  testNotificationIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  testNotificationInfo: {
+    flex: 1,
+  },
+  testNotificationLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  testNotificationDescription: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  testNotificationArrow: {
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: '300',
+    opacity: 0.7,
   },
   footer: {
     alignItems: 'center',

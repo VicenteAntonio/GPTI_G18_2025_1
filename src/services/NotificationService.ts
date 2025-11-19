@@ -50,6 +50,8 @@ export class NotificationService {
 
   /**
    * Programa una notificación diaria recurrente
+   * NOTA: En Expo Go, las notificaciones recurrentes tienen limitaciones.
+   * Para producción, se recomienda hacer un build nativo.
    */
   static async scheduleDailyReminder(hour: number, minute: number): Promise<boolean> {
     try {
@@ -59,7 +61,7 @@ export class NotificationService {
       // Solicitar permisos si no los tenemos
       const hasPermission = await this.requestPermissions();
       if (!hasPermission) {
-        console.log('No se obtuvieron permisos para notificaciones');
+        console.log('⚠️ No se obtuvieron permisos para notificaciones');
         return false;
       }
 
@@ -73,25 +75,78 @@ export class NotificationService {
         scheduledDate.setDate(scheduledDate.getDate() + 1);
       }
 
-      console.log('Programando notificación para:', scheduledDate.toLocaleString());
+      const secondsUntilTrigger = Math.floor((scheduledDate.getTime() - now.getTime()) / 1000);
 
-      // Programar la notificación diaria usando CalendarTrigger
-      const notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: '🧘 Momento de Meditar',
-          body: 'Es hora de tu sesión diaria de meditación. ¡Toma unos minutos para ti!',
-          sound: 'default',
-          priority: Notifications.AndroidNotificationPriority.HIGH,
-          vibrate: [0, 250, 250, 250],
-          data: { type: 'daily_reminder' },
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-          hour: hour,
-          minute: minute,
-          repeats: true, // Repetir cada día a la misma hora
-        } as any,
-      });
+      console.log('📅 Programando notificación para:', scheduledDate.toLocaleString());
+      console.log('⏱️  Tiempo hasta notificación:', Math.floor(secondsUntilTrigger / 60), 'minutos');
+
+      // ENFOQUE HÍBRIDO: Intentar ambos métodos para mejor compatibilidad
+      let notificationId: string;
+
+      try {
+        // Método 1: Usar segundos (más confiable en Expo Go)
+        notificationId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '🧘 Momento de Meditar',
+            body: 'Es hora de tu sesión diaria de meditación. ¡Toma unos minutos para ti!',
+            sound: 'default',
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+            vibrate: [0, 250, 250, 250],
+            data: { 
+              type: 'daily_reminder',
+              scheduledTime: scheduledDate.toISOString()
+            },
+          },
+          trigger: {
+            seconds: secondsUntilTrigger,
+            repeats: false, // Primera notificación sin repetición
+          },
+        });
+
+        console.log('✅ Notificación programada usando trigger de segundos');
+        
+        // Programar también con CalendarTrigger para repetición (si funciona en el dispositivo)
+        try {
+          const recurringId = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: '🧘 Momento de Meditar',
+              body: 'Es hora de tu sesión diaria de meditación. ¡Toma unos minutos para ti!',
+              sound: 'default',
+              priority: Notifications.AndroidNotificationPriority.HIGH,
+              vibrate: [0, 250, 250, 250],
+              data: { type: 'daily_reminder_recurring' },
+            },
+            trigger: {
+              hour: hour,
+              minute: minute,
+              repeats: true,
+            } as any,
+          });
+          console.log('✅ Notificación recurrente también programada (ID:', recurringId, ')');
+        } catch (recurringError) {
+          console.log('⚠️ No se pudo programar notificación recurrente:', recurringError);
+        }
+
+      } catch (error) {
+        console.error('❌ Error con trigger de segundos, intentando CalendarTrigger:', error);
+        
+        // Método 2: Fallback a CalendarTrigger
+        notificationId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '🧘 Momento de Meditar',
+            body: 'Es hora de tu sesión diaria de meditación. ¡Toma unos minutos para ti!',
+            sound: 'default',
+            priority: Notifications.AndroidNotificationPriority.HIGH,
+            vibrate: [0, 250, 250, 250],
+            data: { type: 'daily_reminder' },
+          },
+          trigger: {
+            hour: hour,
+            minute: minute,
+            repeats: true,
+          } as any,
+        });
+      }
 
       // Guardar la configuración
       await AsyncStorage.setItem(DAILY_REMINDER_KEY, notificationId);
@@ -100,16 +155,21 @@ export class NotificationService {
         JSON.stringify({ hour, minute })
       );
 
-      console.log('Notificación diaria programada exitosamente:', { 
+      console.log('✅ Notificación diaria programada exitosamente:', { 
         notificationId, 
         hour, 
         minute,
-        nextTrigger: scheduledDate.toLocaleString()
+        nextTrigger: scheduledDate.toLocaleString(),
+        method: 'hybrid'
       });
+      
+      // Verificar notificaciones programadas
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      console.log('📋 Total de notificaciones programadas:', scheduled.length);
       
       return true;
     } catch (error) {
-      console.error('Error scheduling daily reminder:', error);
+      console.error('❌ Error scheduling daily reminder:', error);
       return false;
     }
   }
@@ -200,38 +260,70 @@ export class NotificationService {
 
   /**
    * Programa una notificación de prueba en X minutos (para testing)
+   * Este método es más confiable en Expo Go usando segundos
    */
   static async scheduleTestNotificationInMinutes(minutes: number = 1): Promise<void> {
     try {
       const hasPermission = await this.requestPermissions();
       if (!hasPermission) {
-        console.log('No se obtuvieron permisos para notificaciones');
+        console.log('⚠️ No se obtuvieron permisos para notificaciones');
         return;
       }
 
-      const now = new Date();
-      const testTime = new Date(now.getTime() + minutes * 60 * 1000);
+      const seconds = minutes * 60;
+      const testTime = new Date(Date.now() + seconds * 1000);
       
-      await Notifications.scheduleNotificationAsync({
+      const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: '🧘 Recordatorio de Prueba',
-          body: `Esta es una notificación programada para ${testTime.toLocaleTimeString()}`,
+          body: `Notificación programada para ${testTime.toLocaleTimeString()}. ¡Funciona!`,
           sound: 'default',
           priority: Notifications.AndroidNotificationPriority.HIGH,
           vibrate: [0, 250, 250, 250],
-          data: { type: 'test_scheduled' },
+          data: { 
+            type: 'test_scheduled',
+            scheduledFor: testTime.toISOString()
+          },
         },
         trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-          hour: testTime.getHours(),
-          minute: testTime.getMinutes(),
-          repeats: false,
-        } as any,
+          seconds: seconds,
+        },
       });
       
-      console.log(`Notificación de prueba programada para: ${testTime.toLocaleTimeString()}`);
+      console.log(`✅ Notificación de prueba programada:`, {
+        id: notificationId,
+        time: testTime.toLocaleTimeString(),
+        inSeconds: seconds
+      });
+      
+      // Verificar que se programó correctamente
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      console.log('📋 Notificaciones programadas:', scheduled.length);
+      scheduled.forEach(n => {
+        console.log('  -', n.identifier, ':', n.content.title);
+      });
     } catch (error) {
-      console.error('Error scheduling test notification:', error);
+      console.error('❌ Error scheduling test notification:', error);
+    }
+  }
+
+  /**
+   * Obtiene todas las notificaciones programadas (útil para debugging)
+   */
+  static async getScheduledNotifications(): Promise<void> {
+    try {
+      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      console.log('📋 === NOTIFICACIONES PROGRAMADAS ===');
+      console.log('Total:', scheduled.length);
+      scheduled.forEach((notification, index) => {
+        console.log(`\n${index + 1}. ID:`, notification.identifier);
+        console.log('   Título:', notification.content.title);
+        console.log('   Trigger:', notification.trigger);
+      });
+      console.log('=================================\n');
+      return scheduled as any;
+    } catch (error) {
+      console.error('Error getting scheduled notifications:', error);
     }
   }
 

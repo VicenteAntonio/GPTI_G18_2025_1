@@ -11,6 +11,169 @@ const STORAGE_KEYS = {
  * Servicio simple de base de datos
  */
 export class DatabaseService {
+  // ========== UTILIDADES DE BASE DE DATOS ==========
+  
+  /**
+   * Limpiar TODOS los datos de la base de datos (usuarios, lecciones, sesiones)
+   * ⚠️ PRECAUCIÓN: Esta acción no se puede deshacer
+   */
+  static async clearAllData(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.USERS,
+        STORAGE_KEYS.LESSONS,
+        STORAGE_KEYS.CURRENT_USER,
+        // Legacy keys
+        '@user_progress',
+        '@completed_sessions',
+      ]);
+      console.log('✅ Base de datos limpiada completamente');
+    } catch (error) {
+      console.error('❌ Error limpiando base de datos:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Limpiar solo los usuarios (mantiene lecciones)
+   */
+  static async clearAllUsers(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.USERS,
+        STORAGE_KEYS.CURRENT_USER,
+        // Legacy keys
+        '@user_progress',
+        '@completed_sessions',
+      ]);
+      console.log('✅ Todos los usuarios eliminados');
+    } catch (error) {
+      console.error('❌ Error eliminando usuarios:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtener estadísticas de la base de datos
+   */
+  static async getDatabaseStats(): Promise<{
+    totalUsers: number;
+    totalLessons: number;
+    currentUser: string | null;
+  }> {
+    try {
+      const users = await this.getAllUsers();
+      const lessons = await this.getAllLessons();
+      const currentUserEmail = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+      
+      return {
+        totalUsers: users.length,
+        totalLessons: lessons.length,
+        currentUser: currentUserEmail,
+      };
+    } catch (error) {
+      console.error('Error obteniendo estadísticas:', error);
+      return {
+        totalUsers: 0,
+        totalLessons: 0,
+        currentUser: null,
+      };
+    }
+  }
+
+  /**
+   * Inicializar datos de la aplicación (seed)
+   * Crea el usuario administrador si no existe
+   */
+  static async seedDatabase(): Promise<void> {
+    try {
+      // Primero migrar usuarios existentes
+      await this.migrateUsersAddRole();
+      
+      // Verificar si ya existe un usuario admin
+      const adminEmail = 'admin@meditation.app';
+      const existingAdmin = await this.getUserByEmail(adminEmail);
+      
+      if (!existingAdmin) {
+        // Crear usuario administrador
+        const adminUser: User = {
+          username: 'Administrador',
+          email: adminEmail,
+          password: 'admin123', // Cambiar en producción
+          role: 'admin',
+          streak: 0,
+          sleepCompleted: 0,
+          relaxationCompleted: 0,
+          selfAwarenessCompleted: 0,
+          longestStreak: 0,
+          achievements: [],
+          betterflies: 0,
+          totalSessions: 0,
+          totalMinutes: 0,
+          lastLessonDate: null,
+        };
+        
+        await this.saveUser(adminUser);
+        console.log('✅ Usuario administrador creado');
+        console.log('   Email: admin@meditation.app');
+        console.log('   Password: admin123');
+      } else {
+        console.log('✓ Usuario administrador ya existe');
+      }
+    } catch (error) {
+      console.error('Error en seed de base de datos:', error);
+    }
+  }
+
+  /**
+   * Migrar usuarios existentes para agregar campo 'role' y validar campos numéricos
+   * Esta función se ejecuta automáticamente en el seed
+   */
+  static async migrateUsersAddRole(): Promise<void> {
+    try {
+      const users = await this.getAllUsers();
+      let migrated = 0;
+      
+      for (const user of users) {
+        let needsUpdate = false;
+        
+        // Si el usuario no tiene el campo role, agregarlo
+        if (!(user as any).role) {
+          (user as any).role = 'user'; // Por defecto, usuarios normales
+          needsUpdate = true;
+        }
+        
+        // Validar y corregir totalMinutes
+        if (user.totalMinutes == null || isNaN(user.totalMinutes)) {
+          user.totalMinutes = 0;
+          needsUpdate = true;
+        }
+        
+        // Validar y corregir otros campos numéricos
+        if (user.totalSessions == null || isNaN(user.totalSessions)) {
+          user.totalSessions = 0;
+          needsUpdate = true;
+        }
+        
+        if (user.betterflies == null || isNaN(user.betterflies)) {
+          user.betterflies = 0;
+          needsUpdate = true;
+        }
+        
+        if (needsUpdate) {
+          await this.saveUser(user);
+          migrated++;
+        }
+      }
+      
+      if (migrated > 0) {
+        console.log(`✅ Migración: ${migrated} usuario(s) actualizados`);
+      }
+    } catch (error) {
+      console.error('Error en migración de usuarios:', error);
+    }
+  }
+
   // ========== USUARIOS ==========
   
   /**
@@ -230,7 +393,8 @@ export class DatabaseService {
 
   /**
    * Actualizar progreso del usuario al completar una lección
-   * Fórmula betterflies: minutos × 2 + floor(racha / 3) + 1
+   * Fórmula betterflies: floor(minutos) × 2 + floor(racha / 3) + 1
+   * Nota: Los minutos se almacenan con 2 decimales, pero se usan enteros para betterflies
    */
   static async completeLesson(
     userEmail: string, 
@@ -244,8 +408,8 @@ export class DatabaseService {
       const user = await this.getUserByEmail(userEmail);
       if (!user) return null;
 
-      // Calcular minutos enteros
-      const minutesInt = Math.floor(lessonMinutes);
+      // Redondear minutos a 2 decimales para consistencia
+      const minutesRounded = Math.round(lessonMinutes * 100) / 100;
 
       const today = this.getTodayDate();
       let newStreak = user.streak;
@@ -268,7 +432,9 @@ export class DatabaseService {
       }
 
       // Calcular betterflies ganadas: minutos × 2 + floor(racha / 3) + 1
-      const betterfliesEarned = (minutesInt * 2) + Math.floor(newStreak / 3) + 1;
+      // Usar minutos enteros para el cálculo de betterflies
+      const minutesForBetterflies = Math.floor(minutesRounded);
+      const betterfliesEarned = (minutesForBetterflies * 2) + Math.floor(newStreak / 3) + 1;
 
       // Incrementar contador de categoría
       let sleepCompleted = user.sleepCompleted;
@@ -287,7 +453,7 @@ export class DatabaseService {
       const updatedUser: User = {
         ...user,
         totalSessions: user.totalSessions + 1,
-        totalMinutes: user.totalMinutes + minutesInt,
+        totalMinutes: Math.round((user.totalMinutes + minutesRounded) * 100) / 100, // Mantener 2 decimales
         streak: newStreak,
         longestStreak: Math.max(user.longestStreak, newStreak),
         betterflies: user.betterflies + betterfliesEarned,

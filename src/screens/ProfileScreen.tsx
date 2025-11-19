@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 import { Button } from '../components/Button';
 import { StorageService } from '../services/StorageService';
@@ -8,10 +9,17 @@ import { AuthService } from '../services/AuthService';
 import { DatabaseService } from '../services/DatabaseService';
 import { User } from '../types';
 import { MEDITATION_CATEGORIES } from '../constants';
+import { RootStackParamList } from '../navigation/AppNavigator';
+import { useTheme } from '../contexts/ThemeContext';
+
+type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const { theme } = useTheme();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userProgress, setUserProgress] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -29,13 +37,17 @@ const ProfileScreen: React.FC = () => {
       const user = await AuthService.getCurrentLoggedUser();
       setCurrentUser(user);
       
+      // Verificar si el usuario es administrador
+      const adminStatus = await AuthService.isCurrentUserAdmin();
+      setIsAdmin(adminStatus);
+      
       if (user) {
-        // Usar datos del usuario directamente
+        // Usar datos del usuario directamente con validación
         const progress = {
-          totalSessions: user.totalSessions,
-          totalMinutes: user.totalMinutes, // Ya es entero
-          currentStreak: user.streak,
-          longestStreak: user.longestStreak,
+          totalSessions: user.totalSessions || 0,
+          totalMinutes: user.totalMinutes || 0, // Con 2 decimales
+          currentStreak: user.streak || 0,
+          longestStreak: user.longestStreak || 0,
         };
         setUserProgress(progress);
       } else {
@@ -70,10 +82,12 @@ const ProfileScreen: React.FC = () => {
     );
   };
 
+  const styles = createStyles(theme);
+
   if (!userProgress) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Cargando...</Text>
+        <Text style={styles.text}>Cargando...</Text>
       </SafeAreaView>
     );
   }
@@ -112,7 +126,9 @@ const ProfileScreen: React.FC = () => {
               <Text style={styles.statLabel}>Sesiones Totales</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{userProgress.totalMinutes}</Text>
+              <Text style={styles.statNumber}>
+                {(userProgress.totalMinutes || 0).toFixed(2)}
+              </Text>
               <Text style={styles.statLabel}>Minutos Meditados</Text>
             </View>
           </View>
@@ -206,6 +222,32 @@ const ProfileScreen: React.FC = () => {
           </View>
         </View> */}
 
+        {/* Botón de Configuración */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => navigation.navigate('Settings')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.settingsButtonText}>⚙️ Configuración</Text>
+            <Text style={styles.settingsButtonSubtext}>Personaliza tu experiencia</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Botón de Admin DevTools */}
+        {isAdmin && (
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.devToolsButton}
+              onPress={() => navigation.navigate('DevTools')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.devToolsButtonText}>🛠️ Herramientas de Desarrollo</Text>
+              <Text style={styles.devToolsButtonSubtext}>Acceso Administrador</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={styles.section}>
           <TouchableOpacity
             style={styles.logoutButton}
@@ -220,10 +262,13 @@ const ProfileScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: theme.background,
+  },
+  text: {
+    color: theme.text,
   },
   scrollView: {
     flex: 1,
@@ -231,10 +276,10 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    shadowColor: '#000',
+    shadowColor: theme.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -249,7 +294,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: theme.background,
     borderRadius: 12,
     width: '100%',
   },
@@ -263,12 +308,12 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: theme.text,
     marginBottom: 4,
   },
   userEmail: {
     fontSize: 14,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
   },
   betterfliesContainer: {
     flexDirection: 'row',
@@ -290,23 +335,23 @@ const styles = StyleSheet.create({
   betterfliesText: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: '#2C3E50', // Color oscuro fijo para contrastar con el fondo amarillo
     marginRight: 8,
   },
   betterfliesLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#7F8C8D',
+    color: '#7F8C8D', // Color gris fijo para contrastar con el fondo amarillo
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: theme.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
   },
   statsContainer: {
     padding: 20,
@@ -322,12 +367,12 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     marginHorizontal: 8,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: theme.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -339,12 +384,12 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#4ECDC4',
+    color: theme.primary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
     textAlign: 'center',
   },
   section: {
@@ -353,17 +398,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: theme.text,
     marginBottom: 16,
   },
   favoriteCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     padding: 20,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: theme.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -382,23 +427,23 @@ const styles = StyleSheet.create({
   favoriteName: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: theme.text,
     marginBottom: 4,
   },
   favoriteCount: {
     fontSize: 14,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
   },
   favoriteEmptyText: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
     textAlign: 'center',
     fontStyle: 'italic',
   },
   categoryBreakdown: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: theme.surface,
     padding: 16,
     borderRadius: 12,
   },
@@ -411,13 +456,13 @@ const styles = StyleSheet.create({
   },
   breakdownLabel: {
     fontSize: 12,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
     marginBottom: 4,
   },
   breakdownCount: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: theme.text,
   },
   // TODO: Estilos para logros (descomentar cuando se implemente)
   // achievementsContainer: {
@@ -456,6 +501,62 @@ const styles = StyleSheet.create({
   //   color: '#7F8C8D',
   //   lineHeight: 20,
   // },
+  settingsButton: {
+    marginTop: 16,
+    backgroundColor: '#95A5A6',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#95A5A6',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  settingsButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  settingsButtonSubtext: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+    opacity: 0.9,
+  },
+  devToolsButton: {
+    marginTop: 16,
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#4ECDC4',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  devToolsButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  devToolsButtonSubtext: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+    opacity: 0.9,
+  },
   logoutButton: {
     marginTop: 16,
     backgroundColor: '#FF6B6B',

@@ -17,6 +17,7 @@ import { StorageService } from '../services/StorageService';
 import { DatabaseService } from '../services/DatabaseService';
 import { AuthService } from '../services/AuthService';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { useTheme } from '../contexts/ThemeContext';
 
 type MeditationScreenRouteProp = RouteProp<RootStackParamList, 'Meditation'>;
 type MeditationScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Meditation'>;
@@ -27,6 +28,7 @@ interface Props {
 }
 
 const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
+  const { theme } = useTheme();
   const { sessionId } = route.params;
   const [session, setSession] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -133,8 +135,23 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const loadSound = async () => {
     try {
+      // Verificar que la sesión tenga un archivo de audio
+      if (!session.audioFile) {
+        console.warn('No audio file found for session, simulating playback');
+        simulateAudioPlayback();
+        return;
+      }
+
+      // Configurar el modo de audio
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true,
+      });
+
+      // Cargar el archivo de audio específico de la sesión
       const { sound: newSound } = await Audio.Sound.createAsync(
-        require('../../assets/meditation-audio.mp3'), // Placeholder audio file
+        session.audioFile,
         { shouldPlay: true } // Iniciar reproducción automáticamente
       );
 
@@ -155,8 +172,14 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
       setIsPlaying(true);
     } catch (error) {
       console.error('Error loading sound:', error);
-      // For demo purposes, we'll simulate audio playback
-      simulateAudioPlayback();
+      console.error('Session ID:', session?.id);
+      console.error('Audio file:', session?.audioFile);
+      // Si hay error al cargar el audio, simular la reproducción
+      Alert.alert(
+        'Audio no disponible',
+        'El archivo de audio no se pudo cargar. Se simulará la sesión.',
+        [{ text: 'OK', onPress: () => simulateAudioPlayback() }]
+      );
     }
   };
 
@@ -243,7 +266,7 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
       Alert.alert(
         '¡Sesión Completada! 🎉',
         `¡Excelente trabajo!\n\n` +
-        `⏱️ Minutos: ${Math.floor(sessionMinutes)}\n` +
+        `⏱️ Minutos: ${sessionMinutes.toFixed(2)}\n` +
         `🦋 Betterflies ganadas: +${betterfliesEarned}\n` +
         `🔥 Racha: ${result.user.streak} días`,
         [
@@ -292,10 +315,12 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const styles = createStyles(theme);
+
   if (!session) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Sesión no encontrada</Text>
+        <Text style={styles.text}>Sesión no encontrada</Text>
       </SafeAreaView>
     );
   }
@@ -347,25 +372,30 @@ const MeditationScreen: React.FC<Props> = ({ route, navigation }) => {
 
         <View style={styles.sessionInfo}>
           <Text style={styles.description}>{session.description}</Text>
-          <Text style={styles.duration}>Duración: {session.duration} minutos</Text>
+          <Text style={styles.duration}>
+            Duración: {(session.duration || 0).toFixed(2)} minutos
+          </Text>
         </View>
       </View>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: theme.background,
+  },
+  text: {
+    color: theme.text,
   },
   header: {
     padding: 20,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    shadowColor: '#000',
+    shadowColor: theme.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -377,13 +407,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: theme.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   category: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
   },
   content: {
     flex: 1,
@@ -400,11 +430,11 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: theme.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -428,13 +458,13 @@ const styles = StyleSheet.create({
   progressBar: {
     width: 250,
     height: 4,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: theme.border,
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: theme.primary,
     borderRadius: 2,
   },
   controls: {
@@ -445,10 +475,10 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: theme.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: theme.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -458,7 +488,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   pauseButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: theme.error,
   },
   playButtonText: {
     fontSize: 32,
@@ -467,7 +497,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: theme.text,
   },
   sessionInfo: {
     alignItems: 'center',
@@ -475,14 +505,14 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 16,
   },
   duration: {
     fontSize: 14,
-    color: '#95A5A6',
+    color: theme.textSecondary,
     fontWeight: '500',
   },
 });

@@ -10,12 +10,23 @@ import SplashScreen from './src/screens/SplashScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import { AuthService } from './src/services/AuthService';
+import { DatabaseService } from './src/services/DatabaseService';
+import { ThemeProvider } from './src/contexts/ThemeContext';
 
 type AppState = 'splash' | 'login' | 'register' | 'app';
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>('splash');
   const [checkAuth, setCheckAuth] = useState(0);
+
+  // Inicializar base de datos (seed) al montar la app
+  useEffect(() => {
+    const initializeDatabase = async () => {
+      await DatabaseService.seedDatabase();
+    };
+    
+    initializeDatabase();
+  }, []);
 
   // Verificar sesión cuando la app vuelve al foreground
   useEffect(() => {
@@ -68,38 +79,36 @@ export default function App() {
     setCheckAuth(prev => prev + 1);
   };
 
-  // Splash Screen
-  if (appState === 'splash') {
-    return <SplashScreen onFinish={handleSplashFinish} />;
-  }
-
-  // Login Screen
-  if (appState === 'login') {
-    return (
-      <LoginScreen
-        onLoginSuccess={handleLoginSuccess}
-        onNavigateToRegister={() => setAppState('register')}
-      />
-    );
-  }
-
-  // Register Screen
-  if (appState === 'register') {
-    return (
-      <RegisterScreen
-        onRegisterSuccess={handleRegisterSuccess}
-        onNavigateToLogin={() => setAppState('login')}
-      />
-    );
-  }
-
-  // Main App
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <AppNavigator />
-        <StatusBar style="auto" />
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <ThemeProvider>
+      {/* Splash Screen */}
+      {appState === 'splash' && <SplashScreen onFinish={handleSplashFinish} />}
+
+      {/* Login Screen */}
+      {appState === 'login' && (
+        <LoginScreen
+          onLoginSuccess={handleLoginSuccess}
+          onNavigateToRegister={() => setAppState('register')}
+        />
+      )}
+
+      {/* Register Screen */}
+      {appState === 'register' && (
+        <RegisterScreen
+          onRegisterSuccess={handleRegisterSuccess}
+          onNavigateToLogin={() => setAppState('login')}
+        />
+      )}
+
+      {/* Main App */}
+      {appState === 'app' && (
+        <SafeAreaProvider>
+          <NavigationContainer>
+            <AppNavigator />
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </SafeAreaProvider>
+      )}
+    </ThemeProvider>
   );
 }

@@ -123,10 +123,12 @@ const SplashScreen: React.FC<Props> = ({ onFinish }) => {
             style={[
               styles.loadingFill,
               {
-                width: loadingFadeAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0%', '100%'],
-                }),
+                transform: [{
+                  scaleX: loadingFadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 1],
+                  }),
+                }],
               },
             ]}
           />
@@ -183,9 +185,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   loadingFill: {
+    width: '100%',
     height: '100%',
     backgroundColor: '#FFFFFF',
     borderRadius: 2,
+    alignSelf: 'flex-start',
   },
 });
 

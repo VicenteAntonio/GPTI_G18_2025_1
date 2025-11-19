@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { MeditationSession } from '../types';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface MeditationCardProps {
   session: MeditationSession;
@@ -13,6 +14,9 @@ export const MeditationCard: React.FC<MeditationCardProps> = ({
   onPress,
   style,
 }) => {
+  const { theme } = useTheme();
+  const styles = createStyles(theme);
+  
   return (
     <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
       <Image source={{ uri: session.imageUrl }} style={styles.image} />
@@ -27,7 +31,9 @@ export const MeditationCard: React.FC<MeditationCardProps> = ({
           {session.description}
         </Text>
         <View style={styles.footer}>
-          <Text style={styles.duration}>{session.duration} min</Text>
+          <Text style={styles.duration}>
+            {(session.duration || 0).toFixed(2)} min
+          </Text>
           {session.isCompleted && (
             <Text style={styles.completed}>✓ Completada</Text>
           )}
@@ -37,11 +43,11 @@ export const MeditationCard: React.FC<MeditationCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: theme.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -75,12 +81,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: theme.text,
     marginBottom: 8,
   },
   description: {
     fontSize: 14,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -91,12 +97,12 @@ const styles = StyleSheet.create({
   },
   duration: {
     fontSize: 14,
-    color: '#95A5A6',
+    color: theme.textSecondary,
     fontWeight: '500',
   },
   completed: {
     fontSize: 12,
-    color: '#4ECDC4',
+    color: theme.primary,
     fontWeight: '600',
   },
 });

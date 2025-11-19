@@ -17,10 +17,12 @@ import { StorageService } from '../services/StorageService';
 import { AuthService } from '../services/AuthService';
 import { MeditationSession, UserProgress, User } from '../types';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { useTheme } from '../contexts/ThemeContext';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MainTabs'>;
 
 const HomeScreen: React.FC = () => {
+  const { theme } = useTheme();
   const [sessions, setSessions] = useState<MeditationSession[]>([]);
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -88,6 +90,8 @@ const HomeScreen: React.FC = () => {
     return 'Buenas noches';
   };
 
+  const styles = createStyles(theme);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -150,17 +154,17 @@ const HomeScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: theme.background,
   },
   header: {
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.card,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    shadowColor: '#000',
+    shadowColor: theme.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -172,12 +176,12 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: theme.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: theme.textSecondary,
     marginBottom: 20,
   },
   statsContainer: {
@@ -191,11 +195,11 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#4ECDC4',
+    color: theme.primary,
   },
   statLabel: {
     fontSize: 12,
-    color: '#95A5A6',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   categoriesContainer: {
@@ -204,7 +208,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: theme.text,
     marginBottom: 12,
   },
   categoriesList: {

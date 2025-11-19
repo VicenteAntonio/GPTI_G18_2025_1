@@ -7,11 +7,13 @@ import HomeScreen from '../screens/HomeScreen';
 import MeditationScreen from '../screens/MeditationScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import DevToolsScreen from '../screens/DevToolsScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 export type RootStackParamList = {
   MainTabs: undefined;
   Meditation: { sessionId: string };
   DevTools: undefined;
+  Settings: undefined;
 };
 
 export type MainTabParamList = {
@@ -97,6 +99,14 @@ const AppNavigator = () => {
         component={DevToolsScreen}
         options={{
           title: '🛠️ Dev Tools',
+          headerBackTitleVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: '⚙️ Configuración',
           headerBackTitleVisible: false,
         }}
       />

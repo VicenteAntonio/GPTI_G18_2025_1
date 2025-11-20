@@ -32,7 +32,6 @@ const SettingsScreen: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [dailyReminderEnabled, setDailyReminderEnabled] = useState(false);
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
   
   // Estados para el selector de hora
@@ -258,10 +257,6 @@ const SettingsScreen: React.FC = () => {
     return `${h}:${m}`;
   };
 
-  const handleSoundToggle = (value: boolean) => {
-    setSoundEnabled(value);
-  };
-
   const handleDarkModeToggle = (value: boolean) => {
     setThemeMode(value ? 'dark' : 'light');
   };
@@ -437,26 +432,6 @@ const SettingsScreen: React.FC = () => {
               <Text style={styles.testNotificationArrow}>›</Text>
             </TouchableOpacity>
           )}
-        </View>
-
-        {/* Sección de Audio */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Audio</Text>
-          
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Sonido</Text>
-              <Text style={styles.settingDescription}>
-                Reproduce sonidos de meditación
-              </Text>
-            </View>
-            <Switch
-              value={soundEnabled}
-              onValueChange={handleSoundToggle}
-              trackColor={{ false: theme.border, true: theme.primary }}
-              thumbColor={soundEnabled ? '#FFFFFF' : theme.surface}
-            />
-          </View>
         </View>
 
         {/* Sección de Apariencia */}

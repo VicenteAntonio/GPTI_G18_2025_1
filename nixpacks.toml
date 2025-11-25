@@ -5,10 +5,12 @@
 nixPkgs = ["python311", "bash"]
 
 [phases.install]
-# Las dependencias se instalan en el script de inicio para evitar problemas de build
+# Skip npm install - no necesitamos dependencias Node en el servidor
+cmds = ["echo 'Skipping npm install - Python only'"]
 
 [phases.build]
 # Sin fase de build necesaria
+cmds = ["echo 'No build phase needed'"]
 
 [start]
 cmd = "bash scripts/start_railway_services.sh"

@@ -28,7 +28,10 @@
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "SCHEDULE_EXACT_ALARM"
+        "SCHEDULE_EXACT_ALARM",
+        "POST_NOTIFICATIONS",
+        "USE_EXACT_ALARM",
+        "WAKE_LOCK"
       ]
     },
     "web": {
@@ -39,7 +42,9 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#4ECDC4"
+          "color": "#4ECDC4",
+          "sounds": [],
+          "mode": "production"
         }
       ]
     ],

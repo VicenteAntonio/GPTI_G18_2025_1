@@ -1,12 +1,11 @@
 # Railway configuration
-# Force Python-only build (ignore package.json)
+# Use Dockerfile for cleaner Python-only build
 
 [build]
-builder = "NIXPACKS"
-nixpacksConfigPath = "nixpacks.toml"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "bash scripts/start_railway_services.sh"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 

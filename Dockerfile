@@ -3,6 +3,11 @@
 
 FROM python:3.11-slim
 
+# Install system dependencies (procps for pgrep command)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends procps && \
+    rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /app
 

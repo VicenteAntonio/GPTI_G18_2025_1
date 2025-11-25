@@ -2,15 +2,13 @@
 # Optimizado para servicios de servidor (bots y scheduler)
 
 [phases.setup]
-nixPkgs = ["python311", "python311Packages.pip", "bash"]
+nixPkgs = ["python311", "bash"]
 
 [phases.install]
-cmds = [
-  "python3 -m pip install --no-cache-dir -r scripts/requirements.txt"
-]
+# Las dependencias se instalan en el script de inicio para evitar problemas de build
 
 [phases.build]
-cmds = []
+# Sin fase de build necesaria
 
 [start]
 cmd = "bash scripts/start_railway_services.sh"

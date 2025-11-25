@@ -39,12 +39,14 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#4ECDC4",
-          "sounds": [
-            "./assets/notification-sound.wav"
-          ]
+          "color": "#4ECDC4"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6b6ba49d-1778-4ac9-8855-bac4181c1110"
+      }
+    }
   }
 }

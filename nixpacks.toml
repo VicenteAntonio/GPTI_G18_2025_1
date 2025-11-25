@@ -1,0 +1,17 @@
+# Configuración de Nixpacks para Railway
+# Optimizado para servicios de servidor (bots y scheduler)
+
+[phases.setup]
+nixPkgs = ["python311", "bash"]
+
+[phases.install]
+cmds = [
+  "pip install --no-cache-dir -r scripts/requirements.txt"
+]
+
+[phases.build]
+cmds = []
+
+[start]
+cmd = "bash scripts/start_railway_services.sh"
+

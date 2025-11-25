@@ -1,0 +1,50 @@
+# Archivos y carpetas innecesarias para el servidor
+# Esto reduce el tamaño del build y el tiempo de despliegue
+
+# Build folders
+android/
+ios/
+.expo/
+web-build/
+
+# Assets grandes (no necesarios en servidor)
+assets/audio/*.mp3
+assets/adaptive-icon.png
+assets/splash.png
+assets/icon.png
+assets/favicon.png
+
+# Node modules (se reinstalan en Railway)
+node_modules/
+
+# Cache
+.expo-shared/
+.cache/
+__pycache__/
+*.pyc
+
+# Logs locales
+logs/*.log
+!logs/.gitkeep
+
+# Development
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Documentation que no se necesita en producción
+docs/IOS_BUILD_GUIDE.md
+docs/ANDROID_VS_IOS_BUILD.md
+docs/IOS_TESTING_WITHOUT_DEVELOPER_ACCOUNT.md
+BUILD_ANDROID_APK.md
+eas.json
+
+# Scripts de build de app (no del servidor)
+scripts/build_android.sh
+scripts/build_ios.sh
+scripts/start_expo.sh
+scripts/regenerate_audio.sh
+

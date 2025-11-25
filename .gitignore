@@ -29,7 +29,8 @@ build/
 .env.local
 
 # Archivos de audio generados (se regeneran con scripts)
-assets/audio/*.mp3
+# NOTA: Estos archivos SÍ deben estar en git para que funcione el build
+# assets/audio/*.mp3
 !assets/audio/.gitkeep
 
 # Lock files (opcional mantener package-lock.json)

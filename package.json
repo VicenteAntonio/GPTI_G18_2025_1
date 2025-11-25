@@ -12,7 +12,12 @@
     "generate-audio": "python3 scripts/generate_audio.py",
     "test-audio": "python3 scripts/test_audio.py",
     "regenerate-audio": "./scripts/regenerate_audio.sh",
-    "admin-info": "node scripts/seed_admin.js"
+    "admin-info": "node scripts/seed_admin.js",
+    "audio:schedule": "python3 scripts/audio_scheduler.py",
+    "audio:setup-cron": "bash scripts/setup_cron.sh",
+    "audio:setup-service": "bash scripts/audio_scheduler_service.sh",
+    "audio:logs": "tail -f logs/audio_scheduler.log",
+    "audio:check": "bash scripts/check_automation.sh"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

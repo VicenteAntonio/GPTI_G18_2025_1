@@ -317,3 +317,4 @@ await NotificationService.getScheduledNotifications();
 *Documentación actualizada: 2025-11-19*
 
 
+

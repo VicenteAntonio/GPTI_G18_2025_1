@@ -23,6 +23,7 @@ import { useTheme } from '../contexts/ThemeContext';
 type SettingsScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 type TimePickerMode = 'push' | 'email';
+type InfoModalType = 'about' | 'help' | 'privacy' | null;
 
 const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<SettingsScreenNavigationProp>();
@@ -40,6 +41,9 @@ const SettingsScreen: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [reminderTime, setReminderTime] = useState<{ hour: number; minute: number } | null>(null);
   const [emailReminderTime, setEmailReminderTime] = useState<{ hour: number; minute: number } | null>(null);
+  
+  // Estados para modales de información
+  const [infoModalVisible, setInfoModalVisible] = useState<InfoModalType>(null);
 
   useEffect(() => {
     loadSettings();
@@ -261,52 +265,6 @@ const SettingsScreen: React.FC = () => {
     setThemeMode(value ? 'dark' : 'light');
   };
 
-  const handleTestNotification = async () => {
-    Alert.alert(
-      '🔔 Probar Notificaciones',
-      '¿Cuándo quieres recibir la notificación de prueba?',
-      [
-        {
-          text: '5 segundos',
-          onPress: async () => {
-            await NotificationService.scheduleTestNotificationInMinutes(5/60);
-            Alert.alert(
-              'Notificación Programada',
-              '¡Espera 5 segundos! Mantén la app abierta.',
-              [{ text: 'Ok' }]
-            );
-          },
-        },
-        {
-          text: '30 segundos',
-          onPress: async () => {
-            await NotificationService.scheduleTestNotificationInMinutes(0.5);
-            Alert.alert(
-              'Notificación Programada',
-              '¡Espera 30 segundos! Mantén la app abierta.',
-              [{ text: 'Ok' }]
-            );
-          },
-        },
-        {
-          text: '1 minuto',
-          onPress: async () => {
-            await NotificationService.scheduleTestNotificationInMinutes(1);
-            Alert.alert(
-              'Notificación Programada',
-              '¡Espera 1 minuto! Puedes minimizar la app.',
-              [{ text: 'Ok' }]
-            );
-          },
-        },
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-      ]
-    );
-  };
-
   const handleResetProgress = () => {
     Alert.alert(
       'Resetear Progreso',
@@ -328,27 +286,19 @@ const SettingsScreen: React.FC = () => {
   };
 
   const handleAbout = () => {
-    Alert.alert(
-      'Acerca de',
-      'Bot de Meditación v1.0\n\nDesarrollado por GPTI Grupo 18\n\nUna aplicación para mejorar tu bienestar mental a través de la meditación guiada.',
-      [{ text: 'Ok' }]
-    );
+    setInfoModalVisible('about');
   };
 
   const handlePrivacyPolicy = () => {
-    Alert.alert(
-      'Política de Privacidad',
-      'Tus datos son privados y seguros. No compartimos información personal con terceros.',
-      [{ text: 'Ok' }]
-    );
+    setInfoModalVisible('privacy');
   };
 
   const handleHelp = () => {
-    Alert.alert(
-      'Ayuda',
-      '¿Necesitas ayuda?\n\n1. Selecciona una categoría en Inicio\n2. Elige una sesión de meditación\n3. Completa la meditación\n4. Revisa tu progreso en Perfil\n\nContacto: support@botmeditacion.com',
-      [{ text: 'Ok' }]
-    );
+    setInfoModalVisible('help');
+  };
+
+  const closeInfoModal = () => {
+    setInfoModalVisible(null);
   };
 
   const styles = createStyles(theme, notificationsEnabled);
@@ -414,24 +364,6 @@ const SettingsScreen: React.FC = () => {
               thumbColor={emailNotificationsEnabled ? '#FFFFFF' : theme.surface}
             />
           </View>
-
-          {/* Botón de Prueba de Notificaciones - Solo visible si están activadas */}
-          {notificationsEnabled && (
-            <TouchableOpacity
-              style={styles.testNotificationButton}
-              onPress={handleTestNotification}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.testNotificationIcon}>🔔</Text>
-              <View style={styles.testNotificationInfo}>
-                <Text style={styles.testNotificationLabel}>Probar Notificación</Text>
-                <Text style={styles.testNotificationDescription}>
-                  Verifica que las notificaciones funcionen
-                </Text>
-              </View>
-              <Text style={styles.testNotificationArrow}>›</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Sección de Apariencia */}
@@ -578,6 +510,263 @@ const SettingsScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Modal de Información - Acerca de */}
+      <Modal
+        visible={infoModalVisible === 'about'}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeInfoModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.infoModalContent}>
+            <View style={styles.infoModalHeader}>
+              <Text style={styles.infoModalIcon}>ℹ️</Text>
+              <Text style={styles.infoModalTitle}>Acerca de</Text>
+            </View>
+            
+            <ScrollView style={styles.infoModalScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Aplicación</Text>
+                <Text style={styles.infoText}>Bot de Meditación</Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Versión</Text>
+                <Text style={styles.infoText}>1.0.0</Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Desarrollado por</Text>
+                <Text style={styles.infoText}>Betterfly</Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Descripción</Text>
+                <Text style={styles.infoText}>
+                  Una aplicación diseñada para mejorar tu bienestar mental a través de la meditación guiada. 
+                  Ofrecemos diversas categorías de meditación adaptadas a tus necesidades, desde manejo del 
+                  estrés hasta mejora del sueño.
+                </Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Características</Text>
+                <Text style={styles.infoBullet}>• Sesiones de meditación guiadas</Text>
+                <Text style={styles.infoBullet}>• Múltiples categorías (Estrés, Ansiedad, Sueño, etc.)</Text>
+                <Text style={styles.infoBullet}>• Seguimiento de progreso personalizado</Text>
+                <Text style={styles.infoBullet}>• Recordatorios diarios por push y email</Text>
+                <Text style={styles.infoBullet}>• Modo oscuro para meditar de noche</Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Tecnología</Text>
+                <Text style={styles.infoText}>React Native • TypeScript • Expo</Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.infoModalButton}
+              onPress={closeInfoModal}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.infoModalButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Información - Ayuda */}
+      <Modal
+        visible={infoModalVisible === 'help'}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeInfoModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.infoModalContent}>
+            <View style={styles.infoModalHeader}>
+              <Text style={styles.infoModalIcon}>❓</Text>
+              <Text style={styles.infoModalTitle}>Ayuda</Text>
+            </View>
+            
+            <ScrollView style={styles.infoModalScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>¿Cómo usar la aplicación?</Text>
+                <Text style={styles.infoText}>
+                  Sigue estos pasos para comenzar tu viaje de meditación:
+                </Text>
+              </View>
+
+              <View style={styles.helpStep}>
+                <View style={styles.helpStepNumber}>
+                  <Text style={styles.helpStepNumberText}>1</Text>
+                </View>
+                <View style={styles.helpStepContent}>
+                  <Text style={styles.helpStepTitle}>Explora las Categorías</Text>
+                  <Text style={styles.helpStepDescription}>
+                    En la pantalla de inicio, encontrarás diferentes categorías de meditación 
+                    como Estrés, Ansiedad, Sueño y más.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.helpStep}>
+                <View style={styles.helpStepNumber}>
+                  <Text style={styles.helpStepNumberText}>2</Text>
+                </View>
+                <View style={styles.helpStepContent}>
+                  <Text style={styles.helpStepTitle}>Selecciona una Sesión</Text>
+                  <Text style={styles.helpStepDescription}>
+                    Elige una sesión que se adapte a tu necesidad actual. Cada sesión tiene 
+                    una duración y descripción específica.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.helpStep}>
+                <View style={styles.helpStepNumber}>
+                  <Text style={styles.helpStepNumberText}>3</Text>
+                </View>
+                <View style={styles.helpStepContent}>
+                  <Text style={styles.helpStepTitle}>Completa la Meditación</Text>
+                  <Text style={styles.helpStepDescription}>
+                    Sigue las instrucciones guiadas y completa la sesión. Tu progreso se 
+                    guardará automáticamente.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.helpStep}>
+                <View style={styles.helpStepNumber}>
+                  <Text style={styles.helpStepNumberText}>4</Text>
+                </View>
+                <View style={styles.helpStepContent}>
+                  <Text style={styles.helpStepTitle}>Revisa tu Progreso</Text>
+                  <Text style={styles.helpStepDescription}>
+                    Ve a tu perfil para ver estadísticas detalladas de tus sesiones 
+                    completadas y tu progreso general.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Consejos</Text>
+                <Text style={styles.infoBullet}>• Busca un lugar tranquilo para meditar</Text>
+                <Text style={styles.infoBullet}>• Usa auriculares para una mejor experiencia</Text>
+                <Text style={styles.infoBullet}>• Medita a la misma hora cada día</Text>
+                <Text style={styles.infoBullet}>• Sé paciente contigo mismo</Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>¿Necesitas más ayuda?</Text>
+                <Text style={styles.infoText}>
+                  Contacto: support@botmeditacion.com
+                </Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.infoModalButton}
+              onPress={closeInfoModal}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.infoModalButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Información - Privacidad */}
+      <Modal
+        visible={infoModalVisible === 'privacy'}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeInfoModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.infoModalContent}>
+            <View style={styles.infoModalHeader}>
+              <Text style={styles.infoModalIcon}>🔒</Text>
+              <Text style={styles.infoModalTitle}>Política de Privacidad</Text>
+            </View>
+            
+            <ScrollView style={styles.infoModalScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Tu Privacidad es Importante</Text>
+                <Text style={styles.infoText}>
+                  En Bot de Meditación, nos tomamos muy en serio la privacidad y seguridad 
+                  de tus datos personales.
+                </Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Información que Recopilamos</Text>
+                <Text style={styles.infoBullet}>• Email de registro</Text>
+                <Text style={styles.infoBullet}>• Progreso de meditación y estadísticas</Text>
+                <Text style={styles.infoBullet}>• Preferencias de notificaciones</Text>
+                <Text style={styles.infoBullet}>• Configuración de la aplicación</Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Cómo Usamos tu Información</Text>
+                <Text style={styles.infoText}>
+                  Utilizamos tu información únicamente para:
+                </Text>
+                <Text style={styles.infoBullet}>• Personalizar tu experiencia de meditación</Text>
+                <Text style={styles.infoBullet}>• Enviarte recordatorios (si lo autorizas)</Text>
+                <Text style={styles.infoBullet}>• Guardar tu progreso y estadísticas</Text>
+                <Text style={styles.infoBullet}>• Mejorar nuestros servicios</Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Protección de Datos</Text>
+                <Text style={styles.infoBullet}>• Todos los datos se almacenan de forma segura</Text>
+                <Text style={styles.infoBullet}>• No compartimos información con terceros</Text>
+                <Text style={styles.infoBullet}>• No vendemos tus datos personales</Text>
+                <Text style={styles.infoBullet}>• Puedes eliminar tu cuenta en cualquier momento</Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Tus Derechos</Text>
+                <Text style={styles.infoText}>
+                  Tienes derecho a acceder, modificar o eliminar tus datos personales en 
+                  cualquier momento. Para ejercer estos derechos, contáctanos.
+                </Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Cookies y Tecnologías Similares</Text>
+                <Text style={styles.infoText}>
+                  Utilizamos tecnologías de almacenamiento local para guardar tus preferencias 
+                  y progreso en el dispositivo.
+                </Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoLabel}>Contacto</Text>
+                <Text style={styles.infoText}>
+                  Para consultas sobre privacidad: privacy@botmeditacion.com
+                </Text>
+              </View>
+
+              <View style={styles.infoSection}>
+                <Text style={styles.infoFootnote}>
+                  Última actualización: Noviembre 2025
+                </Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.infoModalButton}
+              onPress={closeInfoModal}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.infoModalButtonText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -682,46 +871,6 @@ const createStyles = (theme: any, notificationsEnabled: boolean) => StyleSheet.c
     color: theme.border,
     fontWeight: '300',
   },
-  testNotificationButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.primary,
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 12,
-    shadowColor: theme.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  testNotificationIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  testNotificationInfo: {
-    flex: 1,
-  },
-  testNotificationLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  testNotificationDescription: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    opacity: 0.9,
-  },
-  testNotificationArrow: {
-    fontSize: 24,
-    color: '#FFFFFF',
-    fontWeight: '300',
-    opacity: 0.7,
-  },
   footer: {
     alignItems: 'center',
     paddingVertical: 32,
@@ -795,6 +944,120 @@ const createStyles = (theme: any, notificationsEnabled: boolean) => StyleSheet.c
     color: theme.text,
   },
   modalButtonTextConfirm: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  // Estilos de los modales de información
+  infoModalContent: {
+    backgroundColor: theme.card,
+    borderRadius: 20,
+    width: '95%',
+    maxWidth: 600,
+    height: '90%',
+    shadowColor: theme.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  infoModalHeader: {
+    alignItems: 'center',
+    paddingTop: 20,
+    paddingHorizontal: 24,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+  },
+  infoModalIcon: {
+    fontSize: 44,
+    marginBottom: 8,
+  },
+  infoModalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: theme.text,
+    textAlign: 'center',
+  },
+  infoModalScroll: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+  infoSection: {
+    marginBottom: 20,
+  },
+  infoLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.text,
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: theme.textSecondary,
+    lineHeight: 20,
+  },
+  infoBullet: {
+    fontSize: 14,
+    color: theme.textSecondary,
+    lineHeight: 22,
+    marginLeft: 8,
+  },
+  infoFootnote: {
+    fontSize: 12,
+    color: theme.textSecondary,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  helpStep: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    alignItems: 'flex-start',
+  },
+  helpStepNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    marginTop: 2,
+  },
+  helpStepNumberText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  helpStepContent: {
+    flex: 1,
+  },
+  helpStepTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.text,
+    marginBottom: 4,
+  },
+  helpStepDescription: {
+    fontSize: 14,
+    color: theme.textSecondary,
+    lineHeight: 20,
+  },
+  infoModalButton: {
+    backgroundColor: theme.primary,
+    paddingVertical: 16,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: theme.border,
+  },
+  infoModalButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',

@@ -28,6 +28,9 @@ build/
 .env
 .env.local
 
+# Docs
+docs/
+
 # Archivos de audio generados (se regeneran con scripts)
 # NOTA: Estos archivos SÍ deben estar en git para que funcione el build
 # assets/audio/*.mp3

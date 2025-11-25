@@ -1,16 +1,22 @@
 # Configuración de Nixpacks para Railway
 # Optimizado para servicios de servidor (bots y scheduler)
 
+# Provider options - force Python detection
+[providers]
+python = true
+node = false
+
 [phases.setup]
 nixPkgs = ["python311", "bash"]
+nixOverlays = []
+nixLibs = []
 
 [phases.install]
-# Skip npm install - no necesitamos dependencias Node en el servidor
-cmds = ["echo 'Skipping npm install - Python only'"]
+# No instalar dependencias Node
+dependsOn = []
 
 [phases.build]
 # Sin fase de build necesaria
-cmds = ["echo 'No build phase needed'"]
 
 [start]
 cmd = "bash scripts/start_railway_services.sh"

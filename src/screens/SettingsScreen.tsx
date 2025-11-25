@@ -10,6 +10,7 @@ import {
   Alert,
   Modal,
   Platform,
+  TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -18,6 +19,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { NotificationService } from '../services/NotificationService';
 import { EmailService } from '../services/EmailService';
 import { AuthService } from '../services/AuthService';
+import { DatabaseService } from '../services/DatabaseService';
 import { useTheme } from '../contexts/ThemeContext';
 
 type SettingsScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -45,16 +47,25 @@ const SettingsScreen: React.FC = () => {
   // Estados para modales de información
   const [infoModalVisible, setInfoModalVisible] = useState<InfoModalType>(null);
 
+  // Estados para edición de perfil
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [currentUsername, setCurrentUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   useEffect(() => {
     loadSettings();
   }, []);
 
   const loadSettings = async () => {
     try {
-      // Cargar email del usuario actual
+      // Cargar email y nombre de usuario actual
       const user = await AuthService.getCurrentLoggedUser();
       if (user) {
         setCurrentUserEmail(user.email);
+        setCurrentUsername(user.username);
+        setNewUsername(user.username);
       }
 
       // Verificar si hay un recordatorio push activo
@@ -301,6 +312,78 @@ const SettingsScreen: React.FC = () => {
     setInfoModalVisible(null);
   };
 
+  const handleSaveUsername = async () => {
+    if (!newUsername.trim()) {
+      Alert.alert('Error', 'El nombre de usuario no puede estar vacío');
+      return;
+    }
+
+    try {
+      const user = await AuthService.getCurrentLoggedUser();
+      if (user) {
+        user.username = newUsername.trim();
+        await DatabaseService.saveUser(user);
+        setCurrentUsername(newUsername.trim());
+        setIsEditingProfile(false);
+        Alert.alert('Éxito', 'Nombre de usuario actualizado correctamente');
+      }
+    } catch (error) {
+      console.error('Error updating username:', error);
+      Alert.alert('Error', 'No se pudo actualizar el nombre de usuario');
+    }
+  };
+
+  const handleSavePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      Alert.alert('Error', 'Por favor completa todos los campos de contraseña');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Error', 'Las contraseñas no coinciden');
+      return;
+    }
+
+    Alert.alert(
+      'Confirmar cambio',
+      '¿Estás seguro de que quieres cambiar tu contraseña?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Cambiar',
+          onPress: async () => {
+            try {
+              const user = await AuthService.getCurrentLoggedUser();
+              if (user) {
+                user.password = newPassword;
+                await DatabaseService.saveUser(user);
+                setNewPassword('');
+                setConfirmPassword('');
+                Alert.alert('Éxito', 'Contraseña actualizada correctamente');
+              }
+            } catch (error) {
+              console.error('Error updating password:', error);
+              Alert.alert('Error', 'No se pudo actualizar la contraseña');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCancelEdit = () => {
+    setNewUsername(currentUsername);
+    setIsEditingProfile(false);
+  };
+
   const styles = createStyles(theme, notificationsEnabled);
 
   return (
@@ -384,6 +467,108 @@ const SettingsScreen: React.FC = () => {
               thumbColor={themeMode === 'dark' ? '#FFFFFF' : theme.surface}
             />
           </View>
+        </View>
+
+        {/* Sección de Perfil */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Perfil de Usuario</Text>
+          
+          {/* Editar nombre de usuario */}
+          <View style={styles.profileItem}>
+            <Text style={styles.profileLabel}>Nombre de Usuario</Text>
+            <View style={styles.profileInputContainer}>
+              <TextInput
+                style={[styles.profileInput, isEditingProfile && styles.profileInputActive]}
+                value={newUsername}
+                onChangeText={setNewUsername}
+                placeholder="Tu nombre de usuario"
+                placeholderTextColor={theme.textSecondary}
+                editable={isEditingProfile}
+                autoCapitalize="none"
+              />
+            </View>
+            {!isEditingProfile ? (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => setIsEditingProfile(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.editButtonText}>Editar</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.editButtonsContainer}>
+                <TouchableOpacity
+                  style={[styles.editButton, styles.cancelButton]}
+                  onPress={handleCancelEdit}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.editButton, styles.saveButton]}
+                  onPress={handleSaveUsername}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.saveButtonText}>Guardar</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {/* Email (solo lectura) */}
+          <View style={styles.profileItem}>
+            <Text style={styles.profileLabel}>Email</Text>
+            <View style={styles.profileInputContainer}>
+              <TextInput
+                style={[styles.profileInput, styles.profileInputDisabled]}
+                value={currentUserEmail}
+                editable={false}
+                placeholderTextColor={theme.textSecondary}
+              />
+            </View>
+            <Text style={styles.readOnlyLabel}>Solo lectura</Text>
+          </View>
+
+          {/* Cambiar contraseña */}
+          <View style={styles.profileItem}>
+            <Text style={styles.profileLabel}>Cambiar Contraseña</Text>
+            <View style={styles.profileInputContainer}>
+              <TextInput
+                style={styles.profileInput}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder="Nueva contraseña"
+                placeholderTextColor={theme.textSecondary}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+
+          <View style={styles.profileItem}>
+            <Text style={styles.profileLabel}>Confirmar Contraseña</Text>
+            <View style={styles.profileInputContainer}>
+              <TextInput
+                style={styles.profileInput}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Confirma la nueva contraseña"
+                placeholderTextColor={theme.textSecondary}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+
+          {(newPassword || confirmPassword) && (
+            <TouchableOpacity
+              style={styles.savePasswordButton}
+              onPress={handleSavePassword}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.savePasswordButtonText}>Guardar Nueva Contraseña</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Sección de Datos */}
@@ -870,6 +1055,105 @@ const createStyles = (theme: any, notificationsEnabled: boolean) => StyleSheet.c
     fontSize: 24,
     color: theme.border,
     fontWeight: '300',
+  },
+  profileItem: {
+    backgroundColor: theme.card,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: theme.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  profileLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.text,
+    marginBottom: 8,
+  },
+  profileInputContainer: {
+    marginBottom: 8,
+  },
+  profileInput: {
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: theme.text,
+  },
+  profileInputActive: {
+    borderColor: theme.primary,
+    borderWidth: 2,
+  },
+  profileInputDisabled: {
+    opacity: 0.6,
+  },
+  editButton: {
+    backgroundColor: theme.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  editButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  editButtonsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cancelButton: {
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  cancelButtonText: {
+    color: theme.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveButton: {
+    backgroundColor: theme.primary,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  readOnlyLabel: {
+    fontSize: 12,
+    color: theme.textSecondary,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  savePasswordButton: {
+    backgroundColor: theme.primary,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: theme.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  savePasswordButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
   footer: {
     alignItems: 'center',

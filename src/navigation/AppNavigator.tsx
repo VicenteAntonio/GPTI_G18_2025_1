@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
 import MeditationScreen from '../screens/MeditationScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import TelegramBotsScreen from '../screens/TelegramBotsScreen';
 import DevToolsScreen from '../screens/DevToolsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
@@ -18,6 +19,7 @@ export type RootStackParamList = {
 
 export type MainTabParamList = {
   Home: undefined;
+  Bots: undefined;
   Profile: undefined;
 };
 
@@ -52,6 +54,17 @@ const MainTabNavigator = () => {
           tabBarIcon: ({ color, size }) => (
             <Text style={{ fontSize: size, color }}>🏠</Text>
           ),
+        }}
+      />
+      <Tab.Screen
+        name="Bots"
+        component={TelegramBotsScreen}
+        options={{
+          tabBarLabel: 'Bots',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size, color }}>🤖</Text>
+          ),
+          title: 'Bots de Telegram',
         }}
       />
       <Tab.Screen

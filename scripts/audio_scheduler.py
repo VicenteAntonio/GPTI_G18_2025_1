@@ -1,5 +1,5 @@
 """
-Script automatizado para generar audios de meditación cada 24 horas
+Script automatizado para generar audios de meditación cada 24 horas y 1 minuto
 Utiliza APScheduler para ejecutar el script de generación periódicamente
 """
 
@@ -46,10 +46,9 @@ def generate_audio_task():
         
         logger.info("✅ Generación de audios completada exitosamente")
         
-        # Calcular próxima ejecución (24 horas después a las 3:00 AM)
+        # Calcular próxima ejecución (24 horas y 1 minuto después)
         now = datetime.now()
-        tomorrow = now + timedelta(days=1)
-        next_run = datetime.combine(tomorrow.date(), dt_time(3, 0))
+        next_run = now + timedelta(hours=24, minutes=1)
         logger.info(f"📝 Próxima ejecución: {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
         
     except Exception as e:
@@ -66,7 +65,7 @@ def main():
     print("🎵 SCHEDULER DE GENERACIÓN AUTOMÁTICA DE AUDIOS")
     print("=" * 70)
     print(f"📅 Fecha de inicio: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"⏰ Frecuencia: Cada 24 horas")
+    print(f"⏰ Frecuencia: Cada 24 horas y 1 minuto")
     print(f"📁 Logs guardados en: {log_file}")
     print("=" * 70)
     print("\n💡 Presiona Ctrl+C para detener el scheduler\n")
@@ -74,39 +73,28 @@ def main():
     # Crear el scheduler
     scheduler = BlockingScheduler()
     
-    # Opción 1: Ejecutar cada 24 horas desde ahora
-    # scheduler.add_job(
-    #     generate_audio_task,
-    #     'interval',
-    #     hours=24,
-    #     next_run_time=datetime.now()  # Ejecutar inmediatamente al iniciar
-    # )
-    
-    # Opción 2: Ejecutar todos los días a las 3:00 AM (recomendado)
+    # Ejecutar cada 24 horas y 1 minuto (1440 minutos + 1 minuto = 1441 minutos)
     scheduler.add_job(
         generate_audio_task,
-        CronTrigger(hour=3, minute=0),  # 3:00 AM todos los días
+        'interval',
+        minutes=1441,  # 24 horas y 1 minuto
+        next_run_time=datetime.now(),  # Ejecutar inmediatamente al iniciar
         id='audio_generation',
         name='Generación de Audios de Meditación',
         replace_existing=True
     )
     
-    # También ejecutar inmediatamente al iniciar (opcional)
-    # Descomenta la siguiente línea si quieres ejecutar al inicio
-    # generate_audio_task()
-    
     logger.info("🚀 Scheduler iniciado correctamente")
+    logger.info(f"⏰ Intervalo configurado: 24 horas y 1 minuto (1441 minutos)")
     
     # Mostrar información del job programado
     jobs = scheduler.get_jobs()
     if jobs:
         job = jobs[0]
-        # Calcular próxima ejecución basado en el trigger (3:00 AM)
-        now = datetime.now()
-        next_run = datetime.combine(now.date(), dt_time(3, 0))
-        if next_run <= now:
-            next_run += timedelta(days=1)
-        logger.info(f"⏰ Próxima ejecución programada: {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
+        next_run = job.next_run_time
+        if next_run:
+            logger.info(f"⏰ Primera ejecución: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} (inmediata)")
+            logger.info(f"⏰ Próxima ejecución: {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
     
     try:
         # Iniciar el scheduler (esto es bloqueante)

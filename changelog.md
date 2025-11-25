@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2025-11-19
+
+### Added
+- **Sistema de Notificaciones por Email**: Recordatorios diarios por correo electrónico
+  - `EmailService.ts` - Servicio completo de gestión de recordatorios por email
+  - Configuración de hora con el mismo modal elegante que notificaciones push
+  - Validación de formato de email antes de activar recordatorios
+  - Persistencia de configuración en AsyncStorage
+  - Muestra email del usuario y hora configurada en la UI
+  - Sistema de confirmación para desactivar recordatorios
+  - Integración con AuthService para obtener email del usuario
+  - **Nota**: Requiere backend para envío real de emails (ver `docs/NOTIFICACIONES_EMAIL.md`)
+  - Soporte para múltiples métodos de notificación simultáneos (push + email)
+- **Documentación de Email**: Nueva guía completa `docs/NOTIFICACIONES_EMAIL.md`
+  - Explicación detallada de la arquitectura del sistema
+  - Tres opciones de implementación de backend (Node.js, Firebase, SendGrid)
+  - Ejemplos de código completos para cada opción
+  - Guía de configuración de variables de entorno
+  - Mejores prácticas de seguridad
+  - Guía de troubleshooting
+
+### Changed
+- **Configuración de Notificaciones**: Mejorada la lógica de activación/desactivación
+  - El switch principal de "Notificaciones" ahora cancela tanto push como email
+  - Modo del selector de hora dinámico ('push' o 'email')
+  - Mensajes de confirmación personalizados según el tipo de notificación
+  - Descripción del switch de email ahora muestra la hora configurada y el email
+
+### Technical
+- Nuevo archivo: `src/services/EmailService.ts`
+- Actualizado: `src/services/index.ts` - exporta EmailService
+- Actualizado: `src/screens/SettingsScreen.tsx` - integración de notificaciones por email
+- Nuevo archivo: `docs/NOTIFICACIONES_EMAIL.md` - documentación completa
+
 ## [1.6.0] - 2025-11-19
 
 ### Added

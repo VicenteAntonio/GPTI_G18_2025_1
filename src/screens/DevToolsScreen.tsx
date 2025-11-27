@@ -85,14 +85,16 @@ const DevToolsScreenContent: React.FC = () => {
   };
 
   const handleClearUsers = () => {
+    const nonAdminUsers = stats.totalUsers > 0 ? stats.totalUsers - 1 : 0;
     Alert.alert(
       '⚠️ Eliminar Todos los Usuarios',
-      `Se eliminarán ${stats.totalUsers} usuario(s).\n\n` +
+      `Se eliminarán aproximadamente ${nonAdminUsers} usuario(s).\n\n` +
       'Esto incluye:\n' +
       '• Todos los usuarios registrados\n' +
       '• Sesión actual\n' +
       '• Progreso de usuarios\n\n' +
-      'Las lecciones se mantendrán.\n\n' +
+      '✅ El usuario administrador NO será eliminado\n' +
+      '📚 Las lecciones se mantendrán\n\n' +
       '❌ ESTA ACCIÓN NO SE PUEDE DESHACER',
       [
         {
@@ -107,7 +109,7 @@ const DevToolsScreenContent: React.FC = () => {
             try {
               await DatabaseService.clearAllUsers();
               await loadStats();
-              Alert.alert('✅ Éxito', 'Todos los usuarios eliminados');
+              Alert.alert('✅ Éxito', 'Usuarios eliminados (admin preservado)');
             } catch (error) {
               Alert.alert('❌ Error', 'No se pudo eliminar los usuarios');
             } finally {

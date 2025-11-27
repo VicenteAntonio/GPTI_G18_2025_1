@@ -390,3 +390,4 @@ chmod +x scripts/start_expo.sh
 
 **¡Ahora puedes probar tu app en iPhone sin gastar dinero!** 📱✨
 
+

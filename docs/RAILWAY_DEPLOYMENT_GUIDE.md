@@ -263,3 +263,4 @@ Para mejorar:
 
 **¿Necesitas ayuda? Revisa los logs en Railway o ejecuta localmente para debug.**
 
+

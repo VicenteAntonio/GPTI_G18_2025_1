@@ -35,18 +35,34 @@ export class DatabaseService {
   }
 
   /**
-   * Limpiar solo los usuarios (mantiene lecciones)
+   * Limpiar solo los usuarios (mantiene lecciones y el usuario admin)
    */
   static async clearAllUsers(): Promise<void> {
     try {
+      // Obtener todos los usuarios
+      const allUsers = await this.getAllUsers();
+      
+      // Filtrar para mantener solo el usuario admin
+      const adminEmail = 'admin@meditation.app';
+      const adminUser = allUsers.find(user => user.email === adminEmail);
+      
+      // Si existe el admin, guardarlo; si no, mantener array vacío
+      const usersToKeep = adminUser ? [adminUser] : [];
+      
+      // Guardar solo el usuario admin
+      await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(usersToKeep));
+      
+      // Limpiar la sesión actual
+      await AsyncStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+      
+      // Limpiar legacy keys
       await AsyncStorage.multiRemove([
-        STORAGE_KEYS.USERS,
-        STORAGE_KEYS.CURRENT_USER,
-        // Legacy keys
         '@user_progress',
         '@completed_sessions',
       ]);
-      console.log('✅ Todos los usuarios eliminados');
+      
+      const deletedCount = allUsers.length - usersToKeep.length;
+      console.log(`✅ ${deletedCount} usuario(s) eliminado(s), admin preservado`);
     } catch (error) {
       console.error('❌ Error eliminando usuarios:', error);
       throw error;
